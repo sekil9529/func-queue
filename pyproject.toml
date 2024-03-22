@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "func-queue"
+version = "0.1"
+description = ""
+authors = ["liuseki <liuseki@163.com>"]
+license = "Apache-2.0"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+orjson = "*"
+
+[tool.poetry.extras]
+gevent = ["gevent"]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

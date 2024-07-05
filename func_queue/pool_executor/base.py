@@ -1,9 +1,10 @@
 # coding: utf-8
 
-from abc import ABCMeta, abstractmethod
+import abc
+import typing as t
 
 
-class BasePoolExecutor(metaclass=ABCMeta):
+class BasePoolExecutor(metaclass=abc.ABCMeta):
 
     __slots__ = (
         "_maxsize",
@@ -13,4 +14,12 @@ class BasePoolExecutor(metaclass=ABCMeta):
 
         self._maxsize = maxsize
 
-    def submit(self, *args, **kwargs) -> :
+    @abc.abstractmethod
+    def submit(self, *args, **kwargs):
+
+        pass
+
+    @abc.abstractmethod
+    def join(self) -> None:
+
+        pass

@@ -15,13 +15,13 @@ class ThreadPoolExecutor(BasePoolExecutor):
         "_pool",
     )
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, maxsize: int):
+        super().__init__(maxsize)
         self._pool = _ThreadPoolExecutor(max_workers=self._maxsize)
 
-    def submit(self, *args, **kwargs) -> "Future":
+    def submit(self, func, *args, **kwargs) -> "Future":
 
-        return self._pool.submit(*args, **kwargs)
+        return self._pool.submit(func, *args, **kwargs)
 
     def join(self) -> None:
 

@@ -15,7 +15,7 @@ class BasePoolExecutor(metaclass=abc.ABCMeta):
         self._maxsize = maxsize
 
     @abc.abstractmethod
-    def submit(self, *args, **kwargs):
+    def submit(self, func: t.Callable[..., t.Any], *args, **kwargs):
 
         pass
 

@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import abc
+import asyncio
 import typing as t
 
 
@@ -15,11 +16,11 @@ class BasePoolExecutor(metaclass=abc.ABCMeta):
         self._maxsize = maxsize
 
     @abc.abstractmethod
-    def submit(self, func: t.Callable[..., t.Any], *args, **kwargs):
+    async def submit(self, func: t.Callable[..., t.Coroutine], *args, **kwargs) -> asyncio.Task:
 
         pass
 
     @abc.abstractmethod
-    def join(self) -> None:
+    async def join(self) -> None:
 
         pass

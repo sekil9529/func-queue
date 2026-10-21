@@ -1,0 +1,32 @@
+[tool.poetry]
+name = "queue-func"
+version = "0.1"
+description = "Async coroutine functions as queue-backed tasks (QueueFunc)."
+authors = ["liuseki <liuseki@163.com>"]
+license = "Apache-2.0"
+readme = "README.md"
+packages = [{ include = "queue_func" }]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+orjson = "*"
+pydantic = "^2.14.1"
+
+[[tool.poetry.source]]
+name = "aliyun"
+url = "https://mirrors.aliyun.com/pypi/simple"
+priority = "primary"
+
+[tool.poetry.group.test.dependencies]
+pytest = "*"
+pytest-cov = "*"
+pytest-html = "*"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+

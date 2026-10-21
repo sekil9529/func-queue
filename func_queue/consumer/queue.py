@@ -3,27 +3,53 @@
 import asyncio
 import typing as t
 
-from func_queue.type import T, P
+from func_queue.message.base import BaseMessage, Packed
+from func_queue.pool_executor.base import BasePoolExecutor
 from func_queue.consumer.base import BaseConsumer as _BaseConsumer
 
-if t.TYPE_CHECKING:
-    from func_queue.config.queue import Config
-    from func_queue.broker.queue import Broker
 
+class Consumer(_BaseConsumer[Packed]):
 
-class Consumer(_BaseConsumer[T, "Broker", "Config", P]):
+    __slots__ = (
+        "_queue",
+        "_consume_timeout",
+    )
+
+    def __init__(
+            self,
+            queue: asyncio.Queue[Packed],
+            consume_timeout: float,
+            message: BaseMessage[Packed],
+            coro: t.Callable[..., t.Coroutine],
+            enable_consumer: bool,
+            pool_executor_cls: type[BasePoolExecutor],
+            pool_maxsize: int):
+
+        super().__init__(
+            message,
+            coro,
+            enable_consumer,
+            pool_executor_cls,
+            pool_maxsize,
+        )
+        self._queue = queue
+        self._consume_timeout = consume_timeout
 
     async def _consume(self) -> None:
 
-        queue = self._broker.queue
-        timeout = self._config.consume_timeout
-        while (not self._stop_flag) or (not queue.empty()):
+        while (not self._stop_flag) or (not self._queue.empty()):
             try:
-                message: t.Any = await asyncio.wait_for(queue.get(), timeout=timeout)
+                message: Packed = await asyncio.wait_for(
+                    self._queue.get(),
+                    timeout=self._consume_timeout,
+                )
             except asyncio.TimeoutError:
                 continue
-            await self._callback(message)
+            coro_args, coro_kwargs = self._message.unpack(message)
+            await self._dispatch(coro_args, coro_kwargs)
+            self._queue.task_done()
 
     async def join(self) -> None:
 
-        await self._broker.queue.join()
+        await super().join()
+        await self._queue.join()

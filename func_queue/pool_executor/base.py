@@ -16,7 +16,12 @@ class BasePoolExecutor(metaclass=abc.ABCMeta):
         self._maxsize = maxsize
 
     @abc.abstractmethod
-    async def submit(self, func: t.Callable[..., t.Coroutine], *args, **kwargs) -> asyncio.Task:
+    async def submit(
+            self,
+            coro: t.Callable[..., t.Coroutine],
+            coro_args: tuple[t.Any, ...],
+            coro_kwargs: dict[str, t.Any],
+            **kwargs) -> asyncio.Future:
 
         pass
 

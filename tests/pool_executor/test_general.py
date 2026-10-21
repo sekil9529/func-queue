@@ -10,13 +10,13 @@ from func_queue.pool_executor.base import BasePoolExecutor
 from tests.helpers import run_async
 
 
-def test_aio_pool_executor_is_base_subclass():
+def test_pool_executor_is_base_subclass():
 
     assert issubclass(PoolExecutor, BasePoolExecutor)
 
 
 @run_async
-async def test_submit_runs_coroutine_with_args_and_kwargs():
+async def test_pool_executor_submit_runs_coroutine_with_args_and_kwargs():
 
     executor = PoolExecutor(1)
     received = {}
@@ -26,7 +26,7 @@ async def test_submit_runs_coroutine_with_args_and_kwargs():
         received["b"] = b
         received["c"] = c
 
-    await executor.submit(worker, 1, 2, c=3)
+    await executor.submit(worker, (1, 2), {"c": 3})
     await executor.join()
 
     assert received == {"a": 1, "b": 2, "c": 3}
@@ -34,7 +34,7 @@ async def test_submit_runs_coroutine_with_args_and_kwargs():
 
 @pytest.mark.parametrize("maxsize", [1, 2, 3])
 @run_async
-async def test_submit_respects_maxsize(maxsize):
+async def test_pool_executor_submit_respects_maxsize(maxsize):
 
     executor = PoolExecutor(maxsize)
     running = 0
@@ -48,7 +48,7 @@ async def test_submit_respects_maxsize(maxsize):
         running -= 1
 
     for _ in range(maxsize * 3):
-        await executor.submit(worker)
+        await executor.submit(worker, (), {})
 
     await executor.join()
 
@@ -58,7 +58,7 @@ async def test_submit_respects_maxsize(maxsize):
 
 
 @run_async
-async def test_join_waits_for_in_flight_tasks():
+async def test_pool_executor_join_waits_for_in_flight_tasks():
 
     executor = PoolExecutor(2)
     completed = []
@@ -68,7 +68,7 @@ async def test_join_waits_for_in_flight_tasks():
         completed.append(idx)
 
     for idx in range(4):
-        await executor.submit(worker, idx)
+        await executor.submit(worker, (idx,), {})
 
     await asyncio.wait_for(executor.join(), timeout=1)
 
@@ -76,7 +76,7 @@ async def test_join_waits_for_in_flight_tasks():
 
 
 @run_async
-async def test_join_returns_immediately_when_no_tasks():
+async def test_pool_executor_join_returns_immediately_when_no_tasks():
 
     executor = PoolExecutor(2)
 
@@ -84,7 +84,7 @@ async def test_join_returns_immediately_when_no_tasks():
 
 
 @run_async
-async def test_failed_task_still_releases_slot():
+async def test_pool_executor_failed_task_still_releases_slot():
 
     executor = PoolExecutor(1)
     ran = []
@@ -95,11 +95,11 @@ async def test_failed_task_still_releases_slot():
     async def ok():
         ran.append("ok")
 
-    task = await executor.submit(boom)
+    task = await executor.submit(boom, (), {})
     with pytest.raises(ValueError, match="boom"):
         await task
 
-    await executor.submit(ok)
+    await executor.submit(ok, (), {})
     await asyncio.wait_for(executor.join(), timeout=1)
 
     assert ran == ["ok"]

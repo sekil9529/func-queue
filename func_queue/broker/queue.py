@@ -3,8 +3,7 @@
 import asyncio
 import typing as t
 
-from func_queue.type import T
-
+from func_queue.message.base import Packed
 from func_queue.broker.base import BaseBroker as _BaseBroker
 from func_queue.producer.queue import Producer
 from func_queue.consumer.queue import Consumer
@@ -13,20 +12,33 @@ if t.TYPE_CHECKING:
     from func_queue.config.queue import Config
 
 
-class Broker(_BaseBroker[T, "Config"]):
+class Broker(_BaseBroker["Config", Packed]):
+    """内存队列通道。队列由这里创建，再交给 Producer 和 Consumer。"""
 
     __slots__ = (
         "_queue",
     )
 
-    PRODUCER_CLS = Producer
-    CONSUMER_CLS = Consumer
-
     def __init__(self, config: "Config"):
+        self._queue: asyncio.Queue[Packed] = asyncio.Queue(maxsize=config.maxsize)
         super().__init__(config)
-        self._queue: asyncio.Queue[T] = asyncio.Queue(maxsize=self._config.maxsize)
 
-    @property
-    def queue(self) -> asyncio.Queue[T]:
+    def _create_producer(self) -> Producer[Packed]:
 
-        return self._queue
+        return Producer(
+            queue=self._queue,
+            publish_timeout=self._config.publish_timeout,
+            message=self._message,
+        )
+
+    def _create_consumer(self) -> Consumer[Packed]:
+
+        return Consumer(
+            queue=self._queue,
+            consume_timeout=self._config.consume_timeout,
+            message=self._message,
+            coro=self._config.coro,
+            enable_consumer=self._config.enable_consumer,
+            pool_executor_cls=self._config.consumer_pool_executor_cls,
+            pool_maxsize=self._config.consumer_pool_maxsize,
+        )

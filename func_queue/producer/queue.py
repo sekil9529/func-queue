@@ -1,20 +1,30 @@
 # coding: utf-8
 import asyncio
-import typing as t
 
-from func_queue.type import T
+from func_queue.message.base import BaseMessage, Packed
 from func_queue.producer.base import BaseProducer
 
-if t.TYPE_CHECKING:
-    from func_queue.config.queue import Config
-    from func_queue.broker.queue import Broker
 
+class Producer(BaseProducer[Packed]):
 
-class Producer(BaseProducer[T, "Broker", "Config"]):
+    __slots__ = (
+        "_queue",
+        "_publish_timeout",
+    )
 
+    def __init__(
+            self,
+            queue: asyncio.Queue[Packed],
+            publish_timeout: float | None,
+            message: BaseMessage[Packed]):
 
-    async def _publish(self, data: T | bytes, **kwargs) -> None:
+        super().__init__(message)
+        self._queue = queue
+        self._publish_timeout = publish_timeout
 
-        if timeout := self._config.producer_publish_timeout:
-            await asyncio.wait_for(self._broker.queue.put(data), timeout)
-        await self._broker.queue.put(data)
+    async def _publish(self, data: Packed, **kwargs) -> None:
+
+        if timeout := self._publish_timeout:
+            await asyncio.wait_for(self._queue.put(data), timeout)
+            return None
+        await self._queue.put(data)

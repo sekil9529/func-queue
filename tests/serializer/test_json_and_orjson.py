@@ -5,16 +5,17 @@ from decimal import Decimal
 
 import pytest
 
-from func_queue.serializer import json_ser, orjson_ser
+from func_queue.serializer.json_ser import JSONSerializer
+from func_queue.serializer.orjson_ser import OrJSONSerializer
 
 
-SERIALIZERS = (json_ser, orjson_ser)
+SERIALIZERS = (JSONSerializer(), OrJSONSerializer())
 
 
 @pytest.mark.parametrize("ser", SERIALIZERS)
 def test_dumps_default_returns_bytes(ser):
 
-    encoded = ser.dumps({"a": 1})
+    encoded = ser.dumps({"a": 1}, return_bytes=True)
 
     assert isinstance(encoded, bytes)
     assert ser.loads(encoded) == {"a": 1}
@@ -35,7 +36,7 @@ def test_dumps_default_returns_bytes(ser):
 )
 def test_roundtrip_json_native_values(ser, payload):
 
-    encoded = ser.dumps(payload)
+    encoded = ser.dumps(payload, return_bytes=True)
 
     assert ser.loads(encoded) == payload
     assert ser.loads(encoded.decode("utf-8")) == payload
@@ -63,7 +64,9 @@ def test_json_serializer_encodes_datetime_and_date_via_default():
         "day": date(2026, 10, 18),
     }
 
-    assert json_ser.loads(json_ser.dumps(payload)) == {
+    serializer = JSONSerializer()
+
+    assert serializer.loads(serializer.dumps(payload)) == {
         "created_at": "2026-10-18 10:00:00",
         "day": "2026-10-18",
     }
@@ -76,7 +79,9 @@ def test_orjson_serializer_natively_encodes_datetime_and_date():
         "day": date(2026, 10, 18),
     }
 
-    assert orjson_ser.loads(orjson_ser.dumps(payload)) == {
+    serializer = OrJSONSerializer()
+
+    assert serializer.loads(serializer.dumps(payload)) == {
         "created_at": "2026-10-18T10:00:00",
         "day": "2026-10-18",
     }

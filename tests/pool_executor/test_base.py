@@ -15,7 +15,7 @@ def test_base_pool_executor_stores_maxsize():
 
     class Dummy(BasePoolExecutor):
 
-        async def submit(self, func, *args, **kwargs):
+        async def submit(self, coro, coro_args, coro_kwargs, **kwargs):
             return None
 
         async def join(self):

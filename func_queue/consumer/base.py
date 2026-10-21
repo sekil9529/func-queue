@@ -3,73 +3,79 @@
 import abc
 import asyncio
 import logging
+import contextlib
 import typing as t
 from functools import wraps
 
-from func_queue.type import T, B, C, P
+from func_queue.message.base import BaseMessage, Packed
+from func_queue.pool_executor.base import BasePoolExecutor
 
 
-class BaseConsumer(t.Generic[T, B, C, P], metaclass=abc.ABCMeta):
+class BaseConsumer(t.Generic[Packed], metaclass=abc.ABCMeta):
 
     __slots__ = (
-        "_broker",
-        "_config",
+        "_message",
+        "_coro",
+        "_enable_consumer",
         "_pool_executor",
-        "_event",
         "_task",
+        "_stop_flag",
         "_logger",
     )
 
-    def __init__(self, broker: B, config: C):
+    def __init__(
+            self,
+            message: BaseMessage[Packed],
+            coro: t.Callable[..., t.Coroutine],
+            enable_consumer: bool,
+            pool_executor_cls: type[BasePoolExecutor],
+            pool_maxsize: int):
 
-        self._broker = broker
-        self._config = config
-        self._pool_executor = self._init_pool_executor()
-        self._event = asyncio.Event()
+        self._message = message
+        self._coro = coro
+        self._enable_consumer = enable_consumer
+        self._pool_executor = self._init_pool_executor(pool_executor_cls, pool_maxsize)
         self._task: asyncio.Task | None = None
-        self._logger = logging.getLogger(__name__)
         self._stop_flag = False
+        self._logger = logging.getLogger(__name__)
 
-    def _init_pool_executor(self) -> P | None:
+    def _init_pool_executor(
+            self,
+            consumer_pool_executor_cls: type[BasePoolExecutor],
+            consumer_pool_maxsize: int) -> BasePoolExecutor | None:
 
-        if self._config.enable_consumer:
-            return self._config.consumer_pool_executor_cls(self._config.consumer_pool_maxsize)
+        if self._enable_consumer:
+            return consumer_pool_executor_cls(consumer_pool_maxsize)
         return None
 
-    def _run_until_stopped(self, delay: float = 0.02) -> t.Callable:
+    def _run_until_stopped(
+            self,
+            coro: t.Callable[..., t.Awaitable],
+            delay: float = 0.02) -> t.Callable[..., t.Coroutine]:
 
-        def wrapper(coro) -> t.Callable:
+        @wraps(coro)
+        async def wrapped(*args, **kwargs) -> None:
 
-            @wraps(coro)
-            async def wrapped(*args, **kwargs) -> None:
+            while not self._stop_flag:
+                try:
+                    await coro(*args, **kwargs)
+                except Exception as e:
+                    self._logger.exception(e)
+                await asyncio.sleep(delay)
 
-                # start block
-                self._event.clear()
+        return wrapped
 
-                while not self._stop_flag:
-                    try:
-                        await coro(*args, **kwargs)
-                    except Exception as e:
-                        self._logger.exception(e)
-                    await asyncio.sleep(delay)
+    async def _dispatch(self, coro_args: tuple[t.Any], coro_kwargs: dict[str, t.Any], **_kwargs) -> None:
 
-                # close block
-                self._event.set()
-
-            return wrapped
-
-        return wrapper
-
-    async def _callback(self, message: t.Any, **kwargs) -> None:
-
-        await self._pool_executor.submit(self._config.coro, message)
+        assert self._pool_executor is not None, "consumer pool not initialized"
+        await self._pool_executor.submit(self._coro, coro_args, coro_kwargs)
 
     async def consume(self) -> None:
 
-        if self._config.enable_consumer:
+        if self._enable_consumer:
             self._stop_flag = False
-            func = self._run_until_stopped()(self._consume)
-            self._task = asyncio.create_task(func())
+            consume_loop = self._run_until_stopped(self._consume)
+            self._task = asyncio.create_task(consume_loop())
         return None
 
     @abc.abstractmethod
@@ -83,7 +89,9 @@ class BaseConsumer(t.Generic[T, B, C, P], metaclass=abc.ABCMeta):
 
     async def join(self) -> None:
 
-        await self._event.wait()
+        if self._task is not None:
+            with contextlib.suppress(asyncio.CancelledError):
+                await self._task
 
         if self._pool_executor is not None:
             await self._pool_executor.join()

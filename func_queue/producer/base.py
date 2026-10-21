@@ -3,41 +3,33 @@
 import abc
 import typing as t
 
-from func_queue.type import T, B, C
+from func_queue.message.base import BaseMessage, Packed
 
 
-class BaseProducer(t.Generic[T, B, C], metaclass=abc.ABCMeta):
-
+class BaseProducer(t.Generic[Packed], metaclass=abc.ABCMeta):
     __slots__ = (
-        "_broker",
-        "_config",
+        "_message",
     )
 
-    def __init__(self, broker: B, config: C):
+    def __init__(self, message: BaseMessage[Packed]):
 
-        self._broker = broker
-        self._config = config
+        self._message = message
 
-    def _ensure_data(self, msg: T) -> T | bytes:
+    async def publish(
+            self,
+            coro_args: tuple[t.Any],
+            coro_kwargs: dict[str, t.Any] | None = None,
+            **kwargs) -> None:
 
-        if (dumps := self._config.dumps) is not None:
-            return dumps(msg)
-        return msg
-
-    async def publish(self, msg: T, **kwargs) -> None:
-
-        data = self._ensure_data(msg)
-        await self._publish(data, **kwargs)
+        message = self._message.pack(coro_args, coro_kwargs)
+        await self._publish(message, **kwargs)
 
     @abc.abstractmethod
-    async def _publish(self, data: T | bytes, **kwargs) -> None:
-
+    async def _publish(self, data: Packed, **kwargs) -> None:
         pass
 
     async def stop(self) -> None:
-
         pass
 
     async def join(self) -> None:
-
         pass

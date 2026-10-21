@@ -4,13 +4,13 @@ import typing as t
 
 from pydantic.dataclasses import dataclass as pyd_dataclass
 
-from func_queue.config.utils import ExtraIgnoreConfig
-from func_queue.message.base import BaseMessage
-from func_queue.message.general import Message
-from func_queue.serializer.base import BaseSerializer
-from func_queue.serializer.orjson_ser import OrJSONSerializer
-from func_queue.pool_executor.base import BasePoolExecutor
-from func_queue.pool_executor.general import PoolExecutor
+from queue_func.config.utils import ExtraIgnoreConfig
+from queue_func.message.base import BaseMessage
+from queue_func.message.general import Message
+from queue_func.serializer.base import BaseSerializer
+from queue_func.serializer.orjson_ser import OrJSONSerializer
+from queue_func.pool_executor.base import BasePoolExecutor
+from queue_func.pool_executor.general import PoolExecutor
 
 
 @pyd_dataclass(frozen=True, config=ExtraIgnoreConfig)

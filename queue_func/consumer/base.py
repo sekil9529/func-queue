@@ -7,8 +7,8 @@ import contextlib
 import typing as t
 from functools import wraps
 
-from func_queue.message.base import BaseMessage, Packed
-from func_queue.pool_executor.base import BasePoolExecutor
+from queue_func.message.base import BaseMessage, Packed
+from queue_func.pool_executor.base import BasePoolExecutor
 
 
 class BaseConsumer(t.Generic[Packed], metaclass=abc.ABCMeta):

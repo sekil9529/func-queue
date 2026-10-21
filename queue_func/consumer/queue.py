@@ -3,9 +3,9 @@
 import asyncio
 import typing as t
 
-from func_queue.message.base import BaseMessage, Packed
-from func_queue.pool_executor.base import BasePoolExecutor
-from func_queue.consumer.base import BaseConsumer as _BaseConsumer
+from queue_func.message.base import BaseMessage, Packed
+from queue_func.pool_executor.base import BasePoolExecutor
+from queue_func.consumer.base import BaseConsumer as _BaseConsumer
 
 
 class Consumer(_BaseConsumer[Packed]):

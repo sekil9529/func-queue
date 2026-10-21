@@ -1,8 +1,8 @@
 # coding: utf-8
 import asyncio
 
-from func_queue.message.base import BaseMessage, Packed
-from func_queue.producer.base import BaseProducer
+from queue_func.message.base import BaseMessage, Packed
+from queue_func.producer.base import BaseProducer
 
 
 class Producer(BaseProducer[Packed]):

@@ -3,7 +3,7 @@
 import abc
 import typing as t
 
-from func_queue.serializer.base import BaseSerializer
+from queue_func.serializer.base import BaseSerializer
 
 Packed = t.TypeVar("Packed")
 

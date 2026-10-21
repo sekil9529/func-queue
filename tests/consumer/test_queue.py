@@ -2,10 +2,10 @@
 
 import asyncio
 
-from func_queue.consumer.queue import Consumer
-from func_queue.message.general import Message
-from func_queue.pool_executor.general import PoolExecutor
-from func_queue.serializer.orjson_ser import OrJSONSerializer
+from queue_func.consumer.queue import Consumer
+from queue_func.message.general import Message
+from queue_func.pool_executor.general import PoolExecutor
+from queue_func.serializer.orjson_ser import OrJSONSerializer
 
 from tests.helpers import run_async
 

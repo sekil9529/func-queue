@@ -2,7 +2,7 @@
 
 import typing as t
 
-from func_queue.message.base import ArgsMessage, BaseMessage
+from queue_func.message.base import ArgsMessage, BaseMessage
 
 type PackedMessage = ArgsMessage | bytes
 

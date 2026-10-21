@@ -4,8 +4,8 @@ import asyncio
 
 import pytest
 
-from func_queue.pool_executor.general import PoolExecutor
-from func_queue.pool_executor.base import BasePoolExecutor
+from queue_func.pool_executor.general import PoolExecutor
+from queue_func.pool_executor.base import BasePoolExecutor
 
 from tests.helpers import run_async
 

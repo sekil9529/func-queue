@@ -3,10 +3,11 @@
 import abc
 import typing as t
 
-from func_queue.message.base import BaseMessage, Packed
+from queue_func.message.base import BaseMessage, Packed
 
 
 class BaseProducer(t.Generic[Packed], metaclass=abc.ABCMeta):
+
     __slots__ = (
         "_message",
     )

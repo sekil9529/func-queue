@@ -3,8 +3,8 @@
 import json
 import typing as t
 
-from func_queue.serializer.base import BaseSerializer
-from func_queue.serializer.utils import default as _default
+from queue_func.serializer.base import BaseSerializer
+from queue_func.serializer.utils import default as _default
 
 
 class JSONSerializer(BaseSerializer):

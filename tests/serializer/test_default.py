@@ -6,7 +6,7 @@ from decimal import Decimal
 
 import pytest
 
-from func_queue.serializer.utils import default
+from queue_func.serializer.utils import default
 
 
 def test_default_encodes_decimal_as_str():

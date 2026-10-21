@@ -3,13 +3,13 @@
 import asyncio
 import typing as t
 
-from func_queue.message.base import Packed
-from func_queue.broker.base import BaseBroker as _BaseBroker
-from func_queue.producer.queue import Producer
-from func_queue.consumer.queue import Consumer
+from queue_func.message.base import Packed
+from queue_func.broker.base import BaseBroker as _BaseBroker
+from queue_func.producer.queue import Producer
+from queue_func.consumer.queue import Consumer
 
 if t.TYPE_CHECKING:
-    from func_queue.config.queue import Config
+    from queue_func.config.queue import Config
 
 
 class Broker(_BaseBroker["Config", Packed]):

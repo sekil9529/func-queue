@@ -3,8 +3,8 @@
 import asyncio
 import typing as t
 
-from func_queue.pool_executor.base import BasePoolExecutor
-from func_queue.pool_executor.utils import JoinableSemaphore
+from queue_func.pool_executor.base import BasePoolExecutor
+from queue_func.pool_executor.utils import JoinableSemaphore
 
 
 class PoolExecutor(BasePoolExecutor):

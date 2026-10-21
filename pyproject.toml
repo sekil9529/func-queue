@@ -1,10 +1,11 @@
 [tool.poetry]
-name = "func-queue"
+name = "queue-func"
 version = "0.1"
-description = ""
+description = "Async coroutine functions as queue-backed tasks (QueueFunc)."
 authors = ["liuseki <liuseki@163.com>"]
 license = "Apache-2.0"
 readme = "README.md"
+packages = [{ include = "queue_func" }]
 
 [tool.poetry.dependencies]
 python = "^3.12"

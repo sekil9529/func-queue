@@ -4,9 +4,9 @@ import asyncio
 
 import pytest
 
-from func_queue.message.general import Message
-from func_queue.producer.queue import Producer
-from func_queue.serializer.orjson_ser import OrJSONSerializer
+from queue_func.message.general import Message
+from queue_func.producer.queue import Producer
+from queue_func.serializer.orjson_ser import OrJSONSerializer
 
 from tests.helpers import run_async
 

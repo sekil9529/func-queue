@@ -5,8 +5,8 @@ from decimal import Decimal
 
 import pytest
 
-from func_queue.serializer.json_ser import JSONSerializer
-from func_queue.serializer.orjson_ser import OrJSONSerializer
+from queue_func.serializer.json_ser import JSONSerializer
+from queue_func.serializer.orjson_ser import OrJSONSerializer
 
 
 SERIALIZERS = (JSONSerializer(), OrJSONSerializer())

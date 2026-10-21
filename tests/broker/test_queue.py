@@ -2,8 +2,8 @@
 
 import asyncio
 
-from func_queue.broker.queue import Broker
-from func_queue.config.queue import Config
+from queue_func.broker.queue import Broker
+from queue_func.config.queue import Config
 
 from tests.helpers import run_async
 
@@ -36,12 +36,12 @@ async def test_broker_wires_producer_to_consumer_end_to_end():
     )
     broker = Broker(config)
 
-    await broker.consumer.consume()
-    await broker.producer.publish((7,), {})
+    await broker.start_consumer()
+    await broker.publish((7,), {})
     await _wait_until(lambda: calls == [7])
 
-    await broker.consumer.stop()
-    await broker.consumer.join()
+    await broker.stop_consumer()
+    await broker.join_consumer()
 
     assert calls == [7]
 
@@ -56,7 +56,7 @@ async def test_broker_producer_and_consumer_share_message_instance():
         Config(noop, enable_message_serializer=False, consume_timeout=0.05, maxsize=1),
     )
 
-    assert broker.producer._message is broker.consumer._message
+    assert broker.message is broker._message
 
 
 @run_async
@@ -76,11 +76,11 @@ async def test_broker_end_to_end_with_default_serializer():
     )
     broker = Broker(config)
 
-    await broker.consumer.consume()
-    await broker.producer.publish((3, 5), {})
+    await broker.start_consumer()
+    await broker.publish((3, 5), {})
     await _wait_until(lambda: sums == [8])
 
-    await broker.consumer.stop()
-    await broker.consumer.join()
+    await broker.stop_consumer()
+    await broker.join_consumer()
 
     assert sums == [8]

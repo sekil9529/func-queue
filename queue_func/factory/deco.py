@@ -9,7 +9,6 @@ from queue_func.factory.registry import build_broker
 if t.TYPE_CHECKING:
     from queue_func.broker.base import BaseBroker
     from queue_func.config.general import Config as GeneralConfig
-    from queue_func.message.base import BaseMessage
     from queue_func.pool_executor.base import BasePoolExecutor
     from queue_func.serializer.base import BaseSerializer
 
@@ -46,9 +45,10 @@ class QueueFunc(t.Generic[_P, _R]):
             self,
             *,
             args: tuple[t.Any, ...] = (),
-            kwargs: dict[str, t.Any] | None = None) -> None:
+            kwargs: dict[str, t.Any] | None = None,
+            timeout: float | None = None) -> None:
 
-        await self._broker.publish(coro_args=args, coro_kwargs=kwargs)
+        await self._broker.publish(coro_args=args, coro_kwargs=kwargs, timeout=timeout)
 
     @property
     def broker(self) -> "BaseBroker[t.Any, t.Any]":
@@ -76,9 +76,7 @@ def queue(
         consume_timeout: float = ...,
         consumer_pool_executor_cls: type["BasePoolExecutor"] = ...,
         consumer_pool_maxsize: int = ...,
-        message_cls: type["BaseMessage"] = ...,
-        message_serializer_cls: type["BaseSerializer"] = ...,
-        enable_message_serializer: bool = ...,
+        serializer_cls: type["BaseSerializer"] = ...,
         publish_timeout: float | None = ...,
         maxsize: int = ...,
 ) -> t.Callable[[t.Callable[_P, t.Coroutine[t.Any, t.Any, _R]]], QueueFunc[_P, _R]]:

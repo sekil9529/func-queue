@@ -2,6 +2,9 @@
 
 import asyncio
 
+import pytest
+
+from queue_func.errors import PublishTimeoutError
 from queue_func.factory import Backend, queue
 from queue_func.factory.deco import QueueFunc
 
@@ -26,7 +29,6 @@ async def test_deco_push_and_consume_end_to_end():
 
     @queue(
         Backend.QUEUE,
-        enable_message_serializer=False,
         consume_timeout=0.05,
         consumer_pool_maxsize=2,
         maxsize=10,
@@ -51,7 +53,7 @@ async def test_deco_default_queue_backend():
 
     hits: list[int] = []
 
-    @queue(Backend.QUEUE, enable_message_serializer=False, consume_timeout=0.05, maxsize=5)
+    @queue(Backend.QUEUE, consume_timeout=0.05, maxsize=5)
     async def work(n: int):
         hits.append(n)
 
@@ -78,7 +80,7 @@ async def test_deco_push_accepts_kwargs():
 
     received: list[tuple] = []
 
-    @queue(Backend.QUEUE, enable_message_serializer=False, consume_timeout=0.05, maxsize=5)
+    @queue(Backend.QUEUE, consume_timeout=0.05, maxsize=5)
     async def fn(a, b, *, c):
         received.append((a, b, c))
 
@@ -90,3 +92,16 @@ async def test_deco_push_accepts_kwargs():
     await fn.broker.join_consumer()
 
     assert received == [(1, 2, 3)]
+
+
+@run_async
+async def test_deco_push_timeout_overrides_config():
+
+    @queue(Backend.QUEUE, enable_consumer=False, maxsize=1, publish_timeout=None)
+    async def work(n: int):
+        return n
+
+    await work.push(args=(1,))
+
+    with pytest.raises(PublishTimeoutError):
+        await work.push(args=(2,), timeout=0.05)

@@ -14,7 +14,6 @@ from queue_func.factory import Backend, QueueFuncRuntime, queue
 
 _Q = dict(
     backend=Backend.QUEUE,
-    enable_message_serializer=False,
     consume_timeout=0.15,
     maxsize=100,
     consumer_pool_maxsize=4,

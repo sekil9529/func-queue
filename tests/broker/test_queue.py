@@ -29,7 +29,6 @@ async def test_broker_wires_producer_to_consumer_end_to_end():
 
     config = Config(
         work,
-        enable_message_serializer=False,
         consume_timeout=0.05,
         consumer_pool_maxsize=2,
         maxsize=10,
@@ -47,16 +46,16 @@ async def test_broker_wires_producer_to_consumer_end_to_end():
 
 
 @run_async
-async def test_broker_producer_and_consumer_share_message_instance():
+async def test_broker_producer_and_consumer_share_serializer():
 
     async def noop():
         return None
 
     broker = Broker(
-        Config(noop, enable_message_serializer=False, consume_timeout=0.05, maxsize=1),
+        Config(noop, consume_timeout=0.05, maxsize=1),
     )
 
-    assert broker.message is broker._message
+    assert broker.serializer is broker._serializer
 
 
 @run_async
@@ -69,7 +68,6 @@ async def test_broker_end_to_end_with_default_serializer():
 
     config = Config(
         add,
-        enable_message_serializer=True,
         consume_timeout=0.05,
         consumer_pool_maxsize=2,
         maxsize=10,

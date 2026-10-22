@@ -3,36 +3,25 @@
 import abc
 import typing as t
 
-__all__ = (
-    "BaseSerializer",
-)
+Message = t.TypeVar("Message")
+
+type CoroParams = tuple[tuple[t.Any], dict[str, t.Any]]
 
 
-class BaseSerializer(metaclass=abc.ABCMeta):
+class BaseSerializer(t.Generic[Message], metaclass=abc.ABCMeta):
 
-    @t.overload
-    def dumps(self, data: t.Any, return_bytes: t.Literal[True]) -> bytes: ...
-    @t.overload
-    def dumps(self, data: t.Any, return_bytes: t.Literal[False]) -> str: ...
-    @t.overload
-    def dumps(self, data: t.Any, return_bytes: bool) -> t.Union[str, bytes]: ...
+    __slots__ = ()
 
-    def dumps(self, data: t.Any, return_bytes: bool = False) -> t.Union[str, bytes]:
-
-        if return_bytes:
-            return self._dumps_to_bytes(data)
-        return self._dumps_to_str(data)
-
+    @staticmethod
     @abc.abstractmethod
-    def _dumps_to_str(self, data: t.Any) -> str:
-        pass
-
-    @abc.abstractmethod
-    def _dumps_to_bytes(self, data: t.Any) -> bytes:
+    def pack(
+            coro_args: tuple[t.Any],
+            coro_kwargs: dict[str, t.Any] | None = None) -> Message:
 
         pass
 
+    @staticmethod
     @abc.abstractmethod
-    def loads(self, data: t.Any) -> t.Any:
+    def unpack(data: Message) -> CoroParams:
 
         pass

@@ -5,7 +5,14 @@ description = "Async coroutine functions as queue-backed tasks (QueueFunc)."
 authors = ["liuseki <liuseki@163.com>"]
 license = "Apache-2.0"
 readme = "README.md"
+homepage = "https://github.com/sekil9529/queue-func"
+repository = "https://github.com/sekil9529/queue-func"
+documentation = "https://github.com/sekil9529/queue-func#readme"
 packages = [{ include = "queue_func" }]
+
+[tool.poetry.urls]
+Changelog = "https://github.com/sekil9529/queue-func/blob/master/Changelog.rst"
+Issues = "https://github.com/sekil9529/queue-func/issues"
 
 [tool.poetry.dependencies]
 python = "^3.12"

@@ -4,45 +4,22 @@ import asyncio
 
 import pytest
 
-from queue_func.message.general import Message
 from queue_func.producer.queue import Producer
-from queue_func.serializer.orjson_ser import OrJSONSerializer
+from queue_func.serializer.raw import Serializer
 
 from tests.helpers import run_async
-
-
-def _message(*, enable_serializer: bool = False) -> Message:
-
-    return Message(OrJSONSerializer, enable_serializer=enable_serializer)
 
 
 @run_async
 async def test_producer_publish_puts_packed_message_on_queue():
 
     queue: asyncio.Queue = asyncio.Queue()
-    message = _message()
-    producer = Producer(queue, publish_timeout=None, message=message)
+    producer = Producer(queue, publish_timeout=None, serializer=Serializer)
 
     await producer.publish((1, 2), {"c": 3})
 
     wire = queue.get_nowait()
-    assert message.unpack(wire) == ((1, 2), {"c": 3})
-
-
-@run_async
-async def test_producer_publish_with_serializer_produces_bytes():
-
-    queue: asyncio.Queue = asyncio.Queue()
-    message = _message(enable_serializer=True)
-    producer = Producer(queue, publish_timeout=None, message=message)
-
-    await producer.publish(("x",), {})
-
-    wire = queue.get_nowait()
-    assert isinstance(wire, bytes)
-    args, kwargs = message.unpack(wire)
-    assert tuple(args) == ("x",)
-    assert kwargs == {}
+    assert Serializer.unpack(wire) == ((1, 2), {"c": 3})
 
 
 @run_async
@@ -50,8 +27,7 @@ async def test_producer_publish_timeout_raises_when_queue_full():
 
     queue: asyncio.Queue = asyncio.Queue(maxsize=1)
     await queue.put(b"block")
-    message = _message()
-    producer = Producer(queue, publish_timeout=0.05, message=message)
+    producer = Producer(queue, publish_timeout=0.05, serializer=Serializer)
 
     with pytest.raises(asyncio.TimeoutError):
         await producer.publish((), {})
@@ -61,7 +37,7 @@ async def test_producer_publish_timeout_raises_when_queue_full():
 async def test_producer_stop_and_join_are_no_ops():
 
     queue: asyncio.Queue = asyncio.Queue()
-    producer = Producer(queue, publish_timeout=None, message=_message())
+    producer = Producer(queue, publish_timeout=None, serializer=Serializer)
 
     await producer.stop()
     await producer.join()

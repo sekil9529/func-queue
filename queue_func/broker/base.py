@@ -3,7 +3,7 @@
 import abc
 import typing as t
 
-from queue_func.message.base import BaseMessage, Packed
+from queue_func.serializer.base import BaseSerializer, Message
 
 if t.TYPE_CHECKING:
     from queue_func.config.general import Config
@@ -14,16 +14,16 @@ if t.TYPE_CHECKING:
 ConfigType = t.TypeVar("ConfigType", bound="Config")
 
 
-class BaseBroker(t.Generic[ConfigType, Packed], metaclass=abc.ABCMeta):
+class BaseBroker(t.Generic[ConfigType, Message], metaclass=abc.ABCMeta):
     """一条通道的装配者。
 
-    创建时准备好双方共用的 Message，并持有配置与 Producer/Consumer。
+    创建时准备好双方共用的 Serializer，并持有配置与 Producer/Consumer。
     对外通过 publish、start_consumer 等入口操作；运行期业务逻辑仍在 Producer/Consumer 内完成。
     """
 
     __slots__ = (
         "_config",
-        "_message",
+        "_serializer",
         "_producer",
         "_consumer",
     )
@@ -31,27 +31,24 @@ class BaseBroker(t.Generic[ConfigType, Packed], metaclass=abc.ABCMeta):
     def __init__(self, config: ConfigType):
 
         self._config = config
-        self._message: BaseMessage[Packed] = self._config.message_cls(
-            message_serializer_cls=self._config.message_serializer_cls,
-            enable_serializer=self._config.enable_message_serializer,
-        )
+        self._serializer: type[BaseSerializer[Message]] = self._config.serializer_cls
         self._producer = self._create_producer()
         self._consumer = self._create_consumer()
 
     @abc.abstractmethod
-    def _create_producer(self) -> "BaseProducer[Packed]":
+    def _create_producer(self) -> "BaseProducer[Message]":
 
         pass
 
     @abc.abstractmethod
-    def _create_consumer(self) -> "BaseConsumer[Packed]":
+    def _create_consumer(self) -> "BaseConsumer[Message]":
 
         pass
 
     @property
-    def message(self) -> BaseMessage[Packed]:
+    def serializer(self) -> type[BaseSerializer[Message]]:
 
-        return self._message
+        return self._serializer
 
     async def publish(
             self,

@@ -4,27 +4,24 @@ import typing as t
 
 import orjson
 
-from queue_func.serializer.base import BaseSerializer
-from queue_func.serializer.utils import default as _default
-
-__all__ = (
-    "OrJSONSerializer",
-)
+from queue_func.serializer.base import BaseSerializer, CoroParams
 
 
-class OrJSONSerializer(BaseSerializer):
+class Serializer(BaseSerializer[bytes]):
 
-    def __init__(self, default: t.Optional[t.Callable[[t.Any], t.Any]] = None):
-        self._default = default or _default
+    __slots__ = ()
 
-    def _dumps_to_str(self, data: t.Any) -> str:
+    @staticmethod
+    def pack(
+            coro_args: tuple[t.Any],
+            coro_kwargs: dict[str, t.Any] | None = None) -> bytes:
 
-        return self._dumps_to_bytes(data).decode("utf-8")
+        if coro_kwargs is None:
+            coro_kwargs = {}
+        return orjson.dumps((coro_args, coro_kwargs))
 
-    def _dumps_to_bytes(self, data: t.Any) -> bytes:
+    @staticmethod
+    def unpack(data: bytes) -> CoroParams:
 
-        return orjson.dumps(data, default=self._default)
-
-    def loads(self, data: t.Union[str, bytes]) -> t.Any:
-
-        return orjson.loads(data)
+        args, kwargs = orjson.loads(data)
+        return tuple(args), kwargs

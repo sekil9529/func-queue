@@ -26,7 +26,6 @@ async def test_deco_push_and_consume_end_to_end():
 
     @queue(
         Backend.QUEUE,
-        enable_message_serializer=False,
         consume_timeout=0.05,
         consumer_pool_maxsize=2,
         maxsize=10,
@@ -51,7 +50,7 @@ async def test_deco_default_queue_backend():
 
     hits: list[int] = []
 
-    @queue(Backend.QUEUE, enable_message_serializer=False, consume_timeout=0.05, maxsize=5)
+    @queue(Backend.QUEUE, consume_timeout=0.05, maxsize=5)
     async def work(n: int):
         hits.append(n)
 
@@ -78,7 +77,7 @@ async def test_deco_push_accepts_kwargs():
 
     received: list[tuple] = []
 
-    @queue(Backend.QUEUE, enable_message_serializer=False, consume_timeout=0.05, maxsize=5)
+    @queue(Backend.QUEUE, consume_timeout=0.05, maxsize=5)
     async def fn(a, b, *, c):
         received.append((a, b, c))
 

@@ -3,16 +3,10 @@
 import asyncio
 
 from queue_func.consumer.queue import Consumer
-from queue_func.message.general import Message
 from queue_func.pool_executor.general import PoolExecutor
-from queue_func.serializer.orjson_ser import OrJSONSerializer
+from queue_func.serializer.raw import Serializer
 
 from tests.helpers import run_async
-
-
-def _message(*, enable_serializer: bool = False) -> Message:
-
-    return Message(OrJSONSerializer, enable_serializer=enable_serializer)
 
 
 async def _wait_until(predicate, *, timeout: float = 2.0, interval: float = 0.02) -> None:
@@ -30,7 +24,6 @@ async def _wait_until(predicate, *, timeout: float = 2.0, interval: float = 0.02
 async def test_consumer_runs_coro_with_unpacked_args():
 
     queue: asyncio.Queue = asyncio.Queue()
-    message = _message()
     received: list[tuple] = []
 
     async def handler(a, b, *, c):
@@ -39,7 +32,7 @@ async def test_consumer_runs_coro_with_unpacked_args():
     consumer = Consumer(
         queue=queue,
         consume_timeout=0.05,
-        message=message,
+        serializer=Serializer,
         coro=handler,
         enable_consumer=True,
         pool_executor_cls=PoolExecutor,
@@ -47,7 +40,7 @@ async def test_consumer_runs_coro_with_unpacked_args():
     )
 
     await consumer.consume()
-    await queue.put(message.pack((1, 2), {"c": 3}))
+    await queue.put(Serializer.pack((1, 2), {"c": 3}))
     await _wait_until(lambda: len(received) == 1)
 
     await consumer.stop()
@@ -60,7 +53,6 @@ async def test_consumer_runs_coro_with_unpacked_args():
 async def test_consumer_disabled_does_not_start_consume_loop():
 
     queue: asyncio.Queue = asyncio.Queue()
-    message = _message()
 
     async def handler():
         raise AssertionError("should not run")
@@ -68,7 +60,7 @@ async def test_consumer_disabled_does_not_start_consume_loop():
     consumer = Consumer(
         queue=queue,
         consume_timeout=0.05,
-        message=message,
+        serializer=Serializer,
         coro=handler,
         enable_consumer=False,
         pool_executor_cls=PoolExecutor,
@@ -84,7 +76,6 @@ async def test_consumer_disabled_does_not_start_consume_loop():
 async def test_consumer_drains_queue_after_stop():
 
     queue: asyncio.Queue = asyncio.Queue()
-    message = _message()
     received: list[int] = []
 
     async def handler(x):
@@ -93,7 +84,7 @@ async def test_consumer_drains_queue_after_stop():
     consumer = Consumer(
         queue=queue,
         consume_timeout=0.05,
-        message=message,
+        serializer=Serializer,
         coro=handler,
         enable_consumer=True,
         pool_executor_cls=PoolExecutor,
@@ -101,8 +92,8 @@ async def test_consumer_drains_queue_after_stop():
     )
 
     await consumer.consume()
-    await queue.put(message.pack((1,), {}))
-    await queue.put(message.pack((2,), {}))
+    await queue.put(Serializer.pack((1,), {}))
+    await queue.put(Serializer.pack((2,), {}))
     await _wait_until(lambda: len(received) == 2)
 
     await consumer.stop()

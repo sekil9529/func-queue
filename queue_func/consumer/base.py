@@ -7,14 +7,14 @@ import contextlib
 import typing as t
 from functools import wraps
 
-from queue_func.message.base import BaseMessage, Packed
+from queue_func.serializer.base import BaseSerializer, Message
 from queue_func.pool_executor.base import BasePoolExecutor
 
 
-class BaseConsumer(t.Generic[Packed], metaclass=abc.ABCMeta):
+class BaseConsumer(t.Generic[Message], metaclass=abc.ABCMeta):
 
     __slots__ = (
-        "_message",
+        "_serializer",
         "_coro",
         "_enable_consumer",
         "_pool_executor",
@@ -25,13 +25,13 @@ class BaseConsumer(t.Generic[Packed], metaclass=abc.ABCMeta):
 
     def __init__(
             self,
-            message: BaseMessage[Packed],
+            serializer: type[BaseSerializer[Message]],
             coro: t.Callable[..., t.Coroutine],
             enable_consumer: bool,
             pool_executor_cls: type[BasePoolExecutor],
             pool_maxsize: int):
 
-        self._message = message
+        self._serializer = serializer
         self._coro = coro
         self._enable_consumer = enable_consumer
         self._pool_executor = self._init_pool_executor(pool_executor_cls, pool_maxsize)

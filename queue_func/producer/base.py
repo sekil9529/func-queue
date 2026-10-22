@@ -3,18 +3,18 @@
 import abc
 import typing as t
 
-from queue_func.message.base import BaseMessage, Packed
+from queue_func.serializer.base import BaseSerializer, Message
 
 
-class BaseProducer(t.Generic[Packed], metaclass=abc.ABCMeta):
+class BaseProducer(t.Generic[Message], metaclass=abc.ABCMeta):
 
     __slots__ = (
-        "_message",
+        "_serializer",
     )
 
-    def __init__(self, message: BaseMessage[Packed]):
+    def __init__(self, serializer: type[BaseSerializer[Message]]):
 
-        self._message = message
+        self._serializer = serializer
 
     async def publish(
             self,
@@ -22,11 +22,11 @@ class BaseProducer(t.Generic[Packed], metaclass=abc.ABCMeta):
             coro_kwargs: dict[str, t.Any] | None = None,
             **kwargs) -> None:
 
-        message = self._message.pack(coro_args, coro_kwargs)
-        await self._publish(message, **kwargs)
+        packed = self._serializer.pack(coro_args, coro_kwargs)
+        await self._publish(packed, **kwargs)
 
     @abc.abstractmethod
-    async def _publish(self, data: Packed, **kwargs) -> None:
+    async def _publish(self, data: Message, **kwargs) -> None:
         pass
 
     async def stop(self) -> None:

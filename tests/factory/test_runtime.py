@@ -43,11 +43,11 @@ async def test_runtime_stop_joins_all_consumers_front_to_back():
     hits_a: list[int] = []
     hits_b: list[int] = []
 
-    @queue(Backend.QUEUE, enable_message_serializer=False, consume_timeout=0.05, maxsize=10)
+    @queue(Backend.QUEUE, consume_timeout=0.05, maxsize=10)
     async def handler_a(n: int):
         hits_a.append(n)
 
-    @queue(Backend.QUEUE, enable_message_serializer=False, consume_timeout=0.05, maxsize=10)
+    @queue(Backend.QUEUE, consume_timeout=0.05, maxsize=10)
     async def handler_b(n: int):
         hits_b.append(n)
 

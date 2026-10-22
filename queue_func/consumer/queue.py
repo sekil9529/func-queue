@@ -3,12 +3,12 @@
 import asyncio
 import typing as t
 
-from queue_func.message.base import BaseMessage, Packed
+from queue_func.serializer.base import BaseSerializer, Message
 from queue_func.pool_executor.base import BasePoolExecutor
 from queue_func.consumer.base import BaseConsumer as _BaseConsumer
 
 
-class Consumer(_BaseConsumer[Packed]):
+class Consumer(_BaseConsumer[Message]):
 
     __slots__ = (
         "_queue",
@@ -17,16 +17,16 @@ class Consumer(_BaseConsumer[Packed]):
 
     def __init__(
             self,
-            queue: asyncio.Queue[Packed],
+            queue: asyncio.Queue[Message],
             consume_timeout: float,
-            message: BaseMessage[Packed],
+            serializer: type[BaseSerializer[Message]],
             coro: t.Callable[..., t.Coroutine],
             enable_consumer: bool,
             pool_executor_cls: type[BasePoolExecutor],
             pool_maxsize: int):
 
         super().__init__(
-            message,
+            serializer,
             coro,
             enable_consumer,
             pool_executor_cls,
@@ -39,13 +39,13 @@ class Consumer(_BaseConsumer[Packed]):
 
         while (not self._stop_flag) or (not self._queue.empty()):
             try:
-                message: Packed = await asyncio.wait_for(
+                packed: Message = await asyncio.wait_for(
                     self._queue.get(),
                     timeout=self._consume_timeout,
                 )
             except asyncio.TimeoutError:
                 continue
-            coro_args, coro_kwargs = self._message.unpack(message)
+            coro_args, coro_kwargs = self._serializer.unpack(packed)
             await self._dispatch(coro_args, coro_kwargs)
             self._queue.task_done()
 

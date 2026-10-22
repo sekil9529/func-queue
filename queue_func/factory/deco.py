@@ -45,9 +45,10 @@ class QueueFunc(t.Generic[_P, _R]):
             self,
             *,
             args: tuple[t.Any, ...] = (),
-            kwargs: dict[str, t.Any] | None = None) -> None:
+            kwargs: dict[str, t.Any] | None = None,
+            timeout: float | None = None) -> None:
 
-        await self._broker.publish(coro_args=args, coro_kwargs=kwargs)
+        await self._broker.publish(coro_args=args, coro_kwargs=kwargs, timeout=timeout)
 
     @property
     def broker(self) -> "BaseBroker[t.Any, t.Any]":

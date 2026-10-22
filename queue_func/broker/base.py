@@ -54,9 +54,10 @@ class BaseBroker(t.Generic[ConfigType, Message], metaclass=abc.ABCMeta):
             self,
             coro_args: tuple[t.Any, ...],
             coro_kwargs: dict[str, t.Any] | None = None,
-            **kwargs: t.Any) -> None:
+            *,
+            timeout: float | None = None) -> None:
 
-        await self._producer.publish(coro_args, coro_kwargs, **kwargs)
+        await self._producer.publish(coro_args, coro_kwargs, timeout=timeout)
 
     async def start_consumer(self) -> None:
 

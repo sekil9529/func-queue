@@ -104,7 +104,7 @@ async def main():
 asyncio.run(main())
 ```
 
-- `push` 等价于 `broker.publish(coro_args=..., coro_kwargs=...)`
+- `push` 等价于 `broker.publish`。不传 `timeout` 时用 `publish_timeout`；传入数字只改这一次。`None` 表示不限时。超时抛出 `queue_func.PublishTimeoutError`
 - 仍可直接 `await process_order(1)`，不经过队列
 
 多段流水线（各段独立队列与并发上限）：

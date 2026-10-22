@@ -2,6 +2,9 @@
 
 import asyncio
 
+import pytest
+
+from queue_func.errors import PublishTimeoutError
 from queue_func.factory import Backend, queue
 from queue_func.factory.deco import QueueFunc
 
@@ -89,3 +92,16 @@ async def test_deco_push_accepts_kwargs():
     await fn.broker.join_consumer()
 
     assert received == [(1, 2, 3)]
+
+
+@run_async
+async def test_deco_push_timeout_overrides_config():
+
+    @queue(Backend.QUEUE, enable_consumer=False, maxsize=1, publish_timeout=None)
+    async def work(n: int):
+        return n
+
+    await work.push(args=(1,))
+
+    with pytest.raises(PublishTimeoutError):
+        await work.push(args=(2,), timeout=0.05)

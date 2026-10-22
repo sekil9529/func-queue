@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "queue-func"
-version = "0.1"
+version = "0.1.2"
 description = "Async coroutine functions as queue-backed tasks (QueueFunc)."
 authors = ["liuseki <liuseki@163.com>"]
 license = "Apache-2.0"

@@ -4,6 +4,7 @@ import asyncio
 
 import pytest
 
+from queue_func.errors import PublishTimeoutError
 from queue_func.producer.queue import Producer
 from queue_func.serializer.raw import Serializer
 
@@ -29,8 +30,21 @@ async def test_producer_publish_timeout_raises_when_queue_full():
     await queue.put(b"block")
     producer = Producer(queue, publish_timeout=0.05, serializer=Serializer)
 
-    with pytest.raises(asyncio.TimeoutError):
+    with pytest.raises(PublishTimeoutError):
         await producer.publish((), {})
+
+    assert issubclass(PublishTimeoutError, TimeoutError)
+
+
+@run_async
+async def test_producer_publish_call_timeout_overrides_config():
+
+    queue: asyncio.Queue = asyncio.Queue(maxsize=1)
+    await queue.put(b"block")
+    producer = Producer(queue, publish_timeout=None, serializer=Serializer)
+
+    with pytest.raises(PublishTimeoutError):
+        await producer.publish((), {}, timeout=0.05)
 
 
 @run_async

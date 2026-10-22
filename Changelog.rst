@@ -20,12 +20,13 @@
 0.1.2
 =====
 
-:release-date: 待定
+:release-date: 2026-10-22
 
 功能
 ~~~~
 
 - 合并 ``message`` 与 ``serializer``，并支持 orjson。
+- 新增 ``push`` 超时控制（支持按次 ``timeout``，并与配置项 ``publish_timeout`` 在各 Backend 上行为一致）。超时抛出 ``PublishTimeoutError``。
 
 
 .. _version-0.1.0:

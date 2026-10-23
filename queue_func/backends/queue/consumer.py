@@ -4,9 +4,9 @@ import asyncio
 import typing as t
 
 from queue_func.serializer.base import Message
-from queue_func.shared_resource.queue import Resource
+from queue_func.backends.queue.resource import Resource
 from queue_func.pool_executor.base import BasePoolExecutor
-from queue_func.consumer.base import BaseConsumer as _BaseConsumer
+from queue_func.core.consumer import BaseConsumer as _BaseConsumer
 
 
 class Consumer(_BaseConsumer[Message, Resource]):
@@ -14,6 +14,7 @@ class Consumer(_BaseConsumer[Message, Resource]):
     async def _consume(self) -> None:
 
         while (not self._stopped) or (not self._resource.queue.empty()):
+            self._mark_running()
             try:
                 message: Message = await asyncio.wait_for(
                     self._resource.queue.get(),

@@ -2,14 +2,14 @@
 
 import typing as t
 
-from queue_func.config.rabbit_aio_pika import DeliveryMode, ExchangeName
+from queue_func.backends.rabbit_aio_pika.config import DeliveryMode, ExchangeName
 from queue_func.factory import builders as _builders  # noqa: F401 — register backends
 from queue_func.factory.backend import Backend
 from queue_func.factory.registry import build_broker
 
 if t.TYPE_CHECKING:
-    from queue_func.broker.base import BaseBroker
-    from queue_func.config.general import Config as GeneralConfig
+    from queue_func.core.broker import BaseBroker
+    from queue_func.core.config import Config as GeneralConfig
     from queue_func.pool_executor.base import BasePoolExecutor
     from queue_func.serializer.base import BaseSerializer
 

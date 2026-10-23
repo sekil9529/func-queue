@@ -2,8 +2,8 @@
 
 import asyncio
 
-from queue_func.broker.queue import Broker
-from queue_func.config.queue import Config
+from queue_func.backends.queue.broker import Broker
+from queue_func.backends.queue.config import Config
 from queue_func.serializer.raw import Serializer
 
 from tests.helpers import run_async

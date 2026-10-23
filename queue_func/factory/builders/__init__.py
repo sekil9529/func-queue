@@ -2,8 +2,8 @@
 
 """Import builder modules so they register with :func:`register_backend`."""
 
-from queue_func.factory.builders import queue as queue
-from queue_func.factory.builders import rabbit_aio_pika as rabbit_aio_pika
+from queue_func.backends.queue import build as queue
+from queue_func.backends.rabbit_aio_pika import build as rabbit_aio_pika
 
 __all__ = (
     "queue",

@@ -1,7 +1,7 @@
 # coding: utf-8
 
-from queue_func.broker.rabbit_aio_pika import Broker
-from queue_func.config.rabbit_aio_pika import Config, DeliveryMode, ExchangeName
+from queue_func.backends.rabbit_aio_pika.broker import Broker
+from queue_func.backends.rabbit_aio_pika.config import Config, DeliveryMode, ExchangeName
 from queue_func.serializer.orjson_ser import Serializer
 
 from tests.helpers import run_async

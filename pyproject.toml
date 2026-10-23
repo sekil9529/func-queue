@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "queue-func"
-version = "0.2.2"
+version = "0.2.3"
 description = "Async coroutine functions as queue-backed tasks (QueueFunc)."
 authors = ["liuseki <liuseki@163.com>"]
 license = "Apache-2.0"
@@ -11,7 +11,7 @@ documentation = "https://github.com/sekil9529/queue-func#readme"
 packages = [{ include = "queue_func" }]
 
 [tool.poetry.urls]
-Changelog = "https://github.com/sekil9529/queue-func/blob/master/Changelog.rst"
+Changelog = "https://github.com/sekil9529/queue-func/blob/master/CHANGELOG.md"
 Issues = "https://github.com/sekil9529/queue-func/issues"
 
 [tool.poetry.dependencies]

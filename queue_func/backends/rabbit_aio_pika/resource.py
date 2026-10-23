@@ -6,7 +6,7 @@ import typing as t
 import aio_pika
 
 from queue_func.utils.deco import before
-from queue_func.shared_resource.base import BaseResource as _Base
+from queue_func.core.resource import BaseResource as _Base
 from queue_func.serializer.base import Message, BaseSerializer
 
 if t.TYPE_CHECKING:

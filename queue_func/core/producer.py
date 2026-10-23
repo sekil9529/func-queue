@@ -3,7 +3,7 @@
 import abc
 import typing as t
 
-from queue_func.shared_resource.base import Resource
+from queue_func.core.resource import Resource
 from queue_func.serializer.base import Message
 from queue_func.utils.hook import OnceHooks
 from queue_func.utils.waiter import IdleWaiter

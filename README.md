@@ -7,30 +7,29 @@
 [![Python Versions](https://img.shields.io/pypi/pyversions/queue-func.svg)](https://pypi.org/project/queue-func/)
 [![License](https://img.shields.io/pypi/l/queue-func.svg)](https://pypi.org/project/queue-func/)
 
-把 **`async def` 协程** 变成可 **`push`** 的队列任务：在 asyncio 里投递、消费，并按通道控制并发与背压。
+把一个 `async def` 收成队列任务：`push` 投递，消费者在同一个事件循环里执行。
 
-仓库：[github.com/sekil9529/queue-func](https://github.com/sekil9529/queue-func)。版本记录见 [Changelog.rst](Changelog.rst)。
+仓库示例在 [examples/](examples/)。版本记录见 [CHANGELOG.md](CHANGELOG.md)。
 
-> **需要 Python 3.12 及以上。** 任务入口必须是协程函数，普通函数不能作为任务。
+> 需要 Python 3.12 及以上。任务必须是协程函数。
 >
-> RabbitMQ 后端需要另装可选依赖，底层使用 [aio-pika](https://github.com/mosquito/aio-pika) `^9.6`。
+> RabbitMQ 后端是可选依赖，底层用 [aio-pika](https://github.com/mosquito/aio-pika) `^9.6`。
 
 ## 特点
 
-- 完全在 asyncio 里运行。消费者在同一事件循环里按上限并发执行任务，可以和 FastAPI / Starlette 放在一个进程里。
-- 一条链路是序列化、投递、反序列化、执行。启停由通道或 `QueueFuncRuntime` 显式管理。
-- 每个 `QueueFunc` 有自己的队列和消费并发上限。`QueueFuncRuntime` 可以同时跑多段流水线，各段互不影响。
-- 序列化器的 `pack` / `unpack` 决定队列里的数据结构。
-- 通过 `register_backend` 接入新的队列后端。
+- 进程内 `asyncio.Queue` 和 RabbitMQ 两种后端，装饰器都是 `@queue`。
+- 每个任务有自己的队列、序列化和消费并发上限。
+- `QueueFuncRuntime` 把多段任务按下游先启动、上游后停止的顺序一起管。
+- `start` 会等到消费者开始收消息再返回。
+- 装饰之后仍可以直接 `await` 调用，不经过队列。
 
-## 当前后端
+## 启动和停止
 
-| 后端 | 说明 |
-|------|------|
-| `Backend.QUEUE` | 进程内 `asyncio.Queue` |
-| `Backend.RABBIT_AIO_PIKA` | RabbitMQ，安装可选依赖 `rabbit` |
+`broker.start_consumer()` 创建消费任务，并等到它开始收消息。内存队列是已经堵在 `get()` 上；RabbitMQ 是队列已经订阅上。
 
-内存队列的消息留在进程里，序列化默认是 `raw`（队列中仍是 `(args, kwargs)`）。RabbitMQ 默认用 orjson，队列中是 `bytes`。
+`stop` 先标上停止，再等手头这次收消息结束。空闲时最多再等一个 `consume_timeout`。还没取走的 RabbitMQ 消息留在代理上。
+
+RabbitMQ 在消息交给消费池之后确认。处理函数出错不会把消息退回队列。`push` 会等发布确认，超时抛出 `queue_func.PublishTimeoutError`。
 
 ## 安装
 
@@ -44,7 +43,7 @@ pip install queue-func
 pip install "queue-func[rabbit]"
 ```
 
-从仓库安装（开发）：
+从仓库安装：
 
 ```shell
 git clone https://github.com/sekil9529/queue-func.git
@@ -53,6 +52,8 @@ poetry install -E rabbit
 ```
 
 ## 用法
+
+从 `queue_func.factory` 引入 `queue`、`Backend`、`QueueFuncRuntime`。
 
 ### 进程内队列
 
@@ -77,9 +78,9 @@ async def main() -> None:
 asyncio.run(main())
 ```
 
-`push` 就是 `broker.publish`。不传 `timeout` 时用配置里的 `publish_timeout`；传入数字只作用于这一次。`None` 表示不限时。超时抛出 `queue_func.PublishTimeoutError`。
+`push` 就是 `broker.publish`。不传 `timeout` 时用配置里的 `publish_timeout`；传入数字只对这一次有效。`None` 表示不限时。
 
-装饰之后仍可直接调用，不经过队列：
+直接调用：
 
 ```python
 await process_order(1)
@@ -87,7 +88,7 @@ await process_order(1)
 
 ### 多段流水线
 
-`QueueFuncRuntime.start()` 按列表反序启动消费者，下游先就绪。`stop()` 先逐个停止消费者，再停止全部生产者。
+`QueueFuncRuntime.start()` 按列表反序启动，下游先就绪。`stop()` 先逐个停消费者，再停全部生产者。
 
 ```python
 import asyncio
@@ -115,7 +116,7 @@ async def main() -> None:
 asyncio.run(main())
 ```
 
-三段链式示例（含日志）：
+三段链式示例：
 
 ```shell
 poetry run python examples/demo_queue.py
@@ -123,11 +124,9 @@ poetry run python examples/demo_queue.py
 
 ### RabbitMQ
 
-`url` 和 `queue_name` 必填。`enable_declare_queue=True` 时，队列不存在会创建。默认交换机名是 `""`，路由键默认用队列名。`push` 会等待发布确认；`publish_timeout` 是这次确认的超时。
+`url` 和 `queue_name` 必填。`enable_declare_queue=True` 时，队列不存在会创建。默认交换机名是 `""`，路由键默认用队列名。已经存在的队列再声明时，持久化等参数必须和代理上的一致。
 
-消息交给消费池之后就确认。处理函数出错不会把消息退回队列。`stop` 会设上停止标志，当前这次拉取结束（空闲时最多再等一个 `consume_timeout`）后退出；还没取走的消息留在 RabbitMQ 上。
-
-同一个 `QueueFunc` 的生产者和消费者可以分进程运行。只投递的进程把 `enable_consumer` 设为 `False`。
+只投递、不消费的进程把 `enable_consumer` 设为 `False`。
 
 ```python
 import asyncio
@@ -140,6 +139,7 @@ from queue_func.factory import Backend, queue
     url="amqp://guest:guest@127.0.0.1/",
     queue_name="process_order",
     enable_declare_queue=True,
+    consume_timeout=0.5,
 )
 async def process_order(order_id: int) -> None:
     print(order_id)
@@ -168,19 +168,20 @@ poetry run python examples/demo_rabbit_aio_pika.py
 | 参数 | 作用 |
 |------|------|
 | `consumer_pool_maxsize` | 同时执行的协程数，默认 200 |
-| `consume_timeout` | 一次拉取的等待时间，默认 2 秒 |
+| `consume_timeout` | 一次等消息的时间，默认 2 秒 |
 | `publish_timeout` | 投递等待上限，默认不限 |
 | `maxsize` | 仅内存队列，`asyncio.Queue` 容量，默认 200 |
-| `serializer_cls` | 队列中的数据结构 |
+| `serializer_cls` | 队列中的数据结构。内存队列默认 `raw`，RabbitMQ 默认 orjson |
 | `prefetch_count` | 仅 RabbitMQ，未确认消息窗口 |
 | `delivery_mode` | 仅 RabbitMQ，默认持久化 |
 | `exchange_name` / `routing_key` | 仅 RabbitMQ |
+| `queue_durable` | 仅 RabbitMQ，声明队列时是否持久化，默认否 |
 
-其余字段见 `queue_func.config.queue.Config` 和 `queue_func.config.rabbit_aio_pika.Config`。
+其余字段见 `queue_func.backends.queue.config.Config` 和 `queue_func.backends.rabbit_aio_pika.config.Config`。
 
-## 架构
+## 一条任务里有什么
 
-一个 `@queue` 装饰的协程就是一条队列。`push` 投到它自己这条队列上。
+`@queue` 装饰的协程就是一条队列。`push` 投到它自己这条队列上。
 
 - **Broker** 组装生产者、消费者和双方共用的资源，并提供启停与投递。
 - **Producer** 序列化后把数据写入队列。
@@ -199,36 +200,20 @@ flowchart TB
   POOL --> FN["业务协程"]
 ```
 
-## 项目结构
-
-```
-queue_func/
-├── broker/
-├── producer/
-├── consumer/
-├── serializer/       # raw、orjson
-├── shared_resource/
-├── config/
-├── factory/          # @queue、QueueFunc、QueueFuncRuntime
-├── pool_executor/
-└── utils/
-examples/
-├── demo_queue.py
-└── demo_rabbit_aio_pika.py
-```
-
-## 开发与测试
+## 测试
 
 ```shell
 poetry install -E rabbit
-pytest
+poetry run pytest
 ```
 
-`pytest.ini` 会生成覆盖率页面（`htmlcov/`）和 `report.html`。
+单元测试使用假的 RabbitMQ 连接，不要求本机有代理。`examples/demo_rabbit_aio_pika.py` 需要本机 `guest` / `guest`、端口 `5672`。
+
+`pytest.ini` 会写出覆盖率页面 `htmlcov/` 和 `report.html`。
 
 ## 版本
 
-遵循[语义化版本](https://semver.org/lang/zh-CN/)。变更记录在 [Changelog.rst](Changelog.rst)。
+遵循[语义化版本](https://semver.org/lang/zh-CN/)。变更记录在 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 许可证
 

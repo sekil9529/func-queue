@@ -3,7 +3,7 @@
 import asyncio
 
 from queue_func.serializer.base import Message, BaseSerializer
-from queue_func.shared_resource.base import BaseResource as _Base
+from queue_func.core.resource import BaseResource as _Base
 
 
 class Resource(_Base[Message]):

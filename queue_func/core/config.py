@@ -2,13 +2,21 @@
 
 import typing as t
 
+from pydantic.config import ConfigDict
 from pydantic.dataclasses import dataclass as pyd_dataclass
 
-from queue_func.config.utils import ExtraIgnoreConfig
 from queue_func.serializer.base import BaseSerializer
 from queue_func.serializer.orjson_ser import Serializer
 from queue_func.pool_executor.base import BasePoolExecutor
 from queue_func.pool_executor.general import PoolExecutor
+
+
+ExtraIgnoreConfig = ConfigDict(
+    extra="ignore",
+    validate_assignment=True,
+    arbitrary_types_allowed=True,
+    coerce_numbers_to_str=True,
+)
 
 
 @pyd_dataclass(frozen=True, kw_only=True, config=ExtraIgnoreConfig)

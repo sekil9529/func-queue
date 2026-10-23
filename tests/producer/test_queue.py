@@ -3,9 +3,9 @@
 import pytest
 
 from queue_func.errors import PublishTimeoutError
-from queue_func.producer.queue import Producer
+from queue_func.backends.queue.producer import Producer
 from queue_func.serializer.raw import Serializer
-from queue_func.shared_resource.queue import Resource
+from queue_func.backends.queue.resource import Resource
 
 from tests.helpers import run_async
 

@@ -4,8 +4,8 @@ import asyncio
 
 from queue_func.errors import PublishTimeoutError
 from queue_func.serializer.base import Message
-from queue_func.producer.base import BaseProducer
-from queue_func.shared_resource.queue import Resource
+from queue_func.core.producer import BaseProducer
+from queue_func.backends.queue.resource import Resource
 
 
 class Producer(BaseProducer[Message, Resource]):

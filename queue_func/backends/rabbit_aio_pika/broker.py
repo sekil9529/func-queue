@@ -2,13 +2,13 @@
 
 import typing as t
 
-from queue_func.broker.base import BaseBroker as _BaseBroker
-from queue_func.consumer.rabbit_aio_pika import Consumer
-from queue_func.producer.rabbit_aio_pika import Producer
-from queue_func.shared_resource.rabbit_aio_pika import Resource
+from queue_func.core.broker import BaseBroker as _BaseBroker
+from queue_func.backends.rabbit_aio_pika.consumer import Consumer
+from queue_func.backends.rabbit_aio_pika.producer import Producer
+from queue_func.backends.rabbit_aio_pika.resource import Resource
 
 if t.TYPE_CHECKING:
-    from queue_func.config.rabbit_aio_pika import Config
+    from queue_func.backends.rabbit_aio_pika.config import Config
 
 
 class Broker(_BaseBroker["Config", bytes]):

@@ -5,10 +5,10 @@ import typing as t
 
 import aio_pika
 
-from queue_func.config.rabbit_aio_pika import DeliveryMode, ExchangeName
+from queue_func.backends.rabbit_aio_pika.config import DeliveryMode, ExchangeName
 from queue_func.errors import PublishTimeoutError
-from queue_func.producer.base import BaseProducer
-from queue_func.shared_resource.rabbit_aio_pika import Resource
+from queue_func.core.producer import BaseProducer
+from queue_func.backends.rabbit_aio_pika.resource import Resource
 
 if t.TYPE_CHECKING:
     from aio_pika.abc import AbstractChannel, AbstractExchange

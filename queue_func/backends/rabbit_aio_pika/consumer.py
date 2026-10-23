@@ -3,9 +3,9 @@
 import asyncio
 import typing as t
 
-from queue_func.consumer.base import BaseConsumer as _BaseConsumer
+from queue_func.core.consumer import BaseConsumer as _BaseConsumer
 from queue_func.pool_executor.base import BasePoolExecutor
-from queue_func.shared_resource.rabbit_aio_pika import Resource
+from queue_func.backends.rabbit_aio_pika.resource import Resource
 
 if t.TYPE_CHECKING:
     from aio_pika.abc import AbstractIncomingMessage, AbstractQueue
@@ -55,6 +55,7 @@ class Consumer(_BaseConsumer[bytes, Resource]):
         await self._ensure_queue()
         while not self._stopped:
             async with self._queue.iterator(timeout=self._consume_timeout) as queue_iter:
+                self._mark_running()
                 try:
                     message: "AbstractIncomingMessage"
                     async for message in queue_iter:

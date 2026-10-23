@@ -8,7 +8,7 @@ import typing as t
 from functools import wraps
 
 from queue_func.serializer.base import Message
-from queue_func.shared_resource.base import Resource
+from queue_func.core.resource import Resource
 from queue_func.pool_executor.base import BasePoolExecutor
 from queue_func.utils.hook import OnceHooks
 
@@ -24,6 +24,7 @@ class BaseConsumer(t.Generic[Message, Resource], metaclass=abc.ABCMeta):
         "_startup",
         "_shutdown",
         "_stopped",
+        "_running",
         "_logger",
     )
 
@@ -42,6 +43,7 @@ class BaseConsumer(t.Generic[Message, Resource], metaclass=abc.ABCMeta):
         self._pool_executor = self._init_pool_executor(pool_executor_cls, pool_maxsize)
         self._consume_timeout = consume_timeout
         self._stopped = False
+        self._running = asyncio.Event()
         self._startup = OnceHooks()
         self._shutdown = OnceHooks()
         self._logger = logging.getLogger(__name__)
@@ -84,6 +86,12 @@ class BaseConsumer(t.Generic[Message, Resource], metaclass=abc.ABCMeta):
             self._startup.register(self._run_until_stopped(self._consume))
             self._register_shutdown()
             await self._startup.start()
+            await self._running.wait()
+
+    def _mark_running(self) -> None:
+        """消费者已经开始收消息。``consume`` 等到这里才返回。"""
+
+        self._running.set()
 
     @abc.abstractmethod
     async def _consume(self) -> None:  # pragma: no cover

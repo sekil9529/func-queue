@@ -1,12 +1,11 @@
 # coding: utf-8
 
-import asyncio
-
 import pytest
 
 from queue_func.errors import PublishTimeoutError
 from queue_func.producer.queue import Producer
 from queue_func.serializer.raw import Serializer
+from queue_func.shared_resource.queue import Resource
 
 from tests.helpers import run_async
 
@@ -14,21 +13,21 @@ from tests.helpers import run_async
 @run_async
 async def test_producer_publish_puts_packed_message_on_queue():
 
-    queue: asyncio.Queue = asyncio.Queue()
-    producer = Producer(queue, publish_timeout=None, serializer=Serializer)
+    resource: Resource = Resource(Serializer, maxsize=2)
+    producer = Producer(resource, publish_timeout=None)
 
     await producer.publish((1, 2), {"c": 3})
 
-    wire = queue.get_nowait()
+    wire = await resource.queue.get()
     assert Serializer.unpack(wire) == ((1, 2), {"c": 3})
 
 
 @run_async
 async def test_producer_publish_timeout_raises_when_queue_full():
 
-    queue: asyncio.Queue = asyncio.Queue(maxsize=1)
-    await queue.put(b"block")
-    producer = Producer(queue, publish_timeout=0.05, serializer=Serializer)
+    resource: Resource = Resource(Serializer, maxsize=1)
+    await resource.queue.put(b"block")
+    producer = Producer(resource, publish_timeout=0.05)
 
     with pytest.raises(PublishTimeoutError):
         await producer.publish((), {})
@@ -39,19 +38,23 @@ async def test_producer_publish_timeout_raises_when_queue_full():
 @run_async
 async def test_producer_publish_call_timeout_overrides_config():
 
-    queue: asyncio.Queue = asyncio.Queue(maxsize=1)
-    await queue.put(b"block")
-    producer = Producer(queue, publish_timeout=None, serializer=Serializer)
+    resource: Resource = Resource(Serializer, maxsize=1)
+    await resource.queue.put(b"block")
+    producer = Producer(resource, publish_timeout=None)
 
     with pytest.raises(PublishTimeoutError):
         await producer.publish((), {}, timeout=0.05)
 
 
 @run_async
-async def test_producer_stop_and_join_are_no_ops():
+async def test_producer_stop_rejects_later_publish_and_join_returns():
 
-    queue: asyncio.Queue = asyncio.Queue()
-    producer = Producer(queue, publish_timeout=None, serializer=Serializer)
+    resource: Resource = Resource(Serializer, maxsize=1)
+    producer = Producer(resource, publish_timeout=None)
 
     await producer.stop()
+
+    with pytest.raises(RuntimeError):
+        await producer.publish((), {})
+
     await producer.join()

@@ -3,7 +3,8 @@
 import abc
 import typing as t
 
-from queue_func.serializer.base import BaseSerializer, Message
+from queue_func.serializer.base import Message
+from queue_func.shared_resource.base import Resource
 
 if t.TYPE_CHECKING:
     from queue_func.config.general import Config
@@ -22,33 +23,12 @@ class BaseBroker(t.Generic[ConfigType, Message], metaclass=abc.ABCMeta):
     """
 
     __slots__ = (
-        "_config",
-        "_serializer",
         "_producer",
         "_consumer",
     )
 
-    def __init__(self, config: ConfigType):
-
-        self._config = config
-        self._serializer: type[BaseSerializer[Message]] = self._config.serializer_cls
-        self._producer = self._create_producer()
-        self._consumer = self._create_consumer()
-
-    @abc.abstractmethod
-    def _create_producer(self) -> "BaseProducer[Message]":
-
-        pass
-
-    @abc.abstractmethod
-    def _create_consumer(self) -> "BaseConsumer[Message]":
-
-        pass
-
-    @property
-    def serializer(self) -> type[BaseSerializer[Message]]:
-
-        return self._serializer
+    _producer: "BaseProducer"
+    _consumer: "BaseConsumer"
 
     async def publish(
             self,

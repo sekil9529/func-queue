@@ -3,53 +3,30 @@
 import asyncio
 import typing as t
 
-from queue_func.serializer.base import BaseSerializer, Message
+from queue_func.serializer.base import Message
+from queue_func.shared_resource.queue import Resource
 from queue_func.pool_executor.base import BasePoolExecutor
 from queue_func.consumer.base import BaseConsumer as _BaseConsumer
 
 
-class Consumer(_BaseConsumer[Message]):
-
-    __slots__ = (
-        "_queue",
-        "_consume_timeout",
-    )
-
-    def __init__(
-            self,
-            queue: asyncio.Queue[Message],
-            consume_timeout: float,
-            serializer: type[BaseSerializer[Message]],
-            coro: t.Callable[..., t.Coroutine],
-            enable_consumer: bool,
-            pool_executor_cls: type[BasePoolExecutor],
-            pool_maxsize: int):
-
-        super().__init__(
-            serializer,
-            coro,
-            enable_consumer,
-            pool_executor_cls,
-            pool_maxsize,
-        )
-        self._queue = queue
-        self._consume_timeout = consume_timeout
+class Consumer(_BaseConsumer[Message, Resource]):
 
     async def _consume(self) -> None:
 
-        while (not self._stop_flag) or (not self._queue.empty()):
+        while (not self._stopped) or (not self._resource.queue.empty()):
             try:
-                packed: Message = await asyncio.wait_for(
-                    self._queue.get(),
+                message: Message = await asyncio.wait_for(
+                    self._resource.queue.get(),
                     timeout=self._consume_timeout,
                 )
             except asyncio.TimeoutError:
                 continue
-            coro_args, coro_kwargs = self._serializer.unpack(packed)
+            coro_args, coro_kwargs = self._resource.serializer.unpack(message)
             await self._dispatch(coro_args, coro_kwargs)
-            self._queue.task_done()
+            self._resource.queue.task_done()
 
-    async def join(self) -> None:
+    def _register_shutdown(self) -> None:
 
-        await super().join()
-        await self._queue.join()
+        self._shutdown.register(self._startup.wait)
+        self._shutdown.register(self._resource.queue.join)
+        self._shutdown.register(self._join_pool_executor)

@@ -4,6 +4,7 @@ import asyncio
 
 from queue_func.broker.queue import Broker
 from queue_func.config.queue import Config
+from queue_func.serializer.raw import Serializer
 
 from tests.helpers import run_async
 
@@ -28,7 +29,7 @@ async def test_broker_wires_producer_to_consumer_end_to_end():
         calls.append(value)
 
     config = Config(
-        work,
+        coro=work,
         consume_timeout=0.05,
         consumer_pool_maxsize=2,
         maxsize=10,
@@ -52,10 +53,13 @@ async def test_broker_producer_and_consumer_share_serializer():
         return None
 
     broker = Broker(
-        Config(noop, consume_timeout=0.05, maxsize=1),
+        Config(coro=noop, consume_timeout=0.05, maxsize=1),
     )
 
-    assert broker.serializer is broker._serializer
+    resource = broker._producer._resource
+
+    assert resource is broker._consumer._resource
+    assert resource.serializer is Serializer
 
 
 @run_async
@@ -67,7 +71,7 @@ async def test_broker_end_to_end_with_default_serializer():
         sums.append(a + b)
 
     config = Config(
-        add,
+        coro=add,
         consume_timeout=0.05,
         consumer_pool_maxsize=2,
         maxsize=10,

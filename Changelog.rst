@@ -20,12 +20,12 @@
 0.2.1
 =====
 
-:release-date: 待定
+:release-date: 2026-10-23
 
 功能
 ~~~~
 
-- 接入 RabbitMQ 后端。
+- 新增 ``Backend.RABBIT_AIO_PIKA``：通过可选依赖 aio-pika（``^9.6``）接入 RabbitMQ。
 
 
 .. _version-0.1.2:

@@ -7,36 +7,43 @@ import contextlib
 import typing as t
 from functools import wraps
 
-from queue_func.serializer.base import BaseSerializer, Message
+from queue_func.serializer.base import Message
+from queue_func.shared_resource.base import Resource
 from queue_func.pool_executor.base import BasePoolExecutor
+from queue_func.utils.hook import OnceHooks
 
 
-class BaseConsumer(t.Generic[Message], metaclass=abc.ABCMeta):
+class BaseConsumer(t.Generic[Message, Resource], metaclass=abc.ABCMeta):
 
     __slots__ = (
-        "_serializer",
+        "_resource",
         "_coro",
         "_enable_consumer",
         "_pool_executor",
-        "_task",
-        "_stop_flag",
+        "_consume_timeout",
+        "_startup",
+        "_shutdown",
+        "_stopped",
         "_logger",
     )
 
     def __init__(
             self,
-            serializer: type[BaseSerializer[Message]],
+            resource: Resource,
             coro: t.Callable[..., t.Coroutine],
             enable_consumer: bool,
+            consume_timeout: float,
             pool_executor_cls: type[BasePoolExecutor],
             pool_maxsize: int):
 
-        self._serializer = serializer
+        self._resource = resource
         self._coro = coro
         self._enable_consumer = enable_consumer
         self._pool_executor = self._init_pool_executor(pool_executor_cls, pool_maxsize)
-        self._task: asyncio.Task | None = None
-        self._stop_flag = False
+        self._consume_timeout = consume_timeout
+        self._stopped = False
+        self._startup = OnceHooks()
+        self._shutdown = OnceHooks()
         self._logger = logging.getLogger(__name__)
 
     def _init_pool_executor(
@@ -50,15 +57,15 @@ class BaseConsumer(t.Generic[Message], metaclass=abc.ABCMeta):
 
     def _run_until_stopped(
             self,
-            coro: t.Callable[..., t.Awaitable],
-            delay: float = 0.02) -> t.Callable[..., t.Coroutine]:
+            fn: t.Callable[..., t.Awaitable],
+            delay: float = 0.05) -> t.Callable[..., t.Coroutine]:
 
-        @wraps(coro)
+        @wraps(fn)
         async def wrapped(*args, **kwargs) -> None:
 
-            while not self._stop_flag:
+            while not self._stopped:
                 try:
-                    await coro(*args, **kwargs)
+                    await fn(*args, **kwargs)
                 except Exception as e:
                     self._logger.exception(e)
                 await asyncio.sleep(delay)
@@ -73,10 +80,10 @@ class BaseConsumer(t.Generic[Message], metaclass=abc.ABCMeta):
     async def consume(self) -> None:
 
         if self._enable_consumer:
-            self._stop_flag = False
-            consume_loop = self._run_until_stopped(self._consume)
-            self._task = asyncio.create_task(consume_loop())
-        return None
+            self._stopped = False
+            self._startup.register(self._run_until_stopped(self._consume))
+            self._register_shutdown()
+            await self._startup.start()
 
     @abc.abstractmethod
     async def _consume(self) -> None:  # pragma: no cover
@@ -85,13 +92,22 @@ class BaseConsumer(t.Generic[Message], metaclass=abc.ABCMeta):
 
     async def stop(self) -> None:
 
-        self._stop_flag = True
+        await self._shutdown.start(prepare=self._mark_stopped)
+
+    def _mark_stopped(self) -> None:
+
+        self._stopped = True
 
     async def join(self) -> None:
 
-        if self._task is not None:
-            with contextlib.suppress(asyncio.CancelledError):
-                await self._task
+        await self._shutdown.wait()
+
+    async def _join_pool_executor(self):
 
         if self._pool_executor is not None:
             await self._pool_executor.join()
+
+    def _register_shutdown(self) -> None:
+
+        self._shutdown.register(self._startup.wait)
+        self._shutdown.register(self._join_pool_executor)

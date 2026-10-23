@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "queue-func"
-version = "0.1.2"
+version = "0.2.1"
 description = "Async coroutine functions as queue-backed tasks (QueueFunc)."
 authors = ["liuseki <liuseki@163.com>"]
 license = "Apache-2.0"
@@ -18,6 +18,10 @@ Issues = "https://github.com/sekil9529/queue-func/issues"
 python = "^3.12"
 orjson = "*"
 pydantic = "^2.14.1"
+aio-pika = { version = "^9.6", optional = true }
+
+[tool.poetry.extras]
+rabbit = ["aio-pika"]
 
 [[tool.poetry.source]]
 name = "aliyun"
@@ -28,6 +32,7 @@ priority = "primary"
 pytest = "*"
 pytest-cov = "*"
 pytest-html = "*"
+aio-pika = "^9.6"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

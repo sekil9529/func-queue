@@ -5,6 +5,7 @@ import asyncio
 from queue_func.consumer.queue import Consumer
 from queue_func.pool_executor.general import PoolExecutor
 from queue_func.serializer.raw import Serializer
+from queue_func.shared_resource.queue import Resource
 
 from tests.helpers import run_async
 
@@ -20,27 +21,36 @@ async def _wait_until(predicate, *, timeout: float = 2.0, interval: float = 0.02
     raise AssertionError("condition not met before timeout")
 
 
+def _resource(maxsize: int) -> Resource:
+
+    return Resource(Serializer, maxsize=maxsize)
+
+
+def _consumer(resource: Resource, handler, *, enabled: bool = True, pool_maxsize: int = 2) -> Consumer:
+
+    return Consumer(
+        resource=resource,
+        consume_timeout=0.05,
+        coro=handler,
+        enable_consumer=enabled,
+        pool_executor_cls=PoolExecutor,
+        pool_maxsize=pool_maxsize,
+    )
+
+
 @run_async
 async def test_consumer_runs_coro_with_unpacked_args():
 
-    queue: asyncio.Queue = asyncio.Queue()
+    resource = _resource(2)
     received: list[tuple] = []
 
     async def handler(a, b, *, c):
         received.append((a, b, c))
 
-    consumer = Consumer(
-        queue=queue,
-        consume_timeout=0.05,
-        serializer=Serializer,
-        coro=handler,
-        enable_consumer=True,
-        pool_executor_cls=PoolExecutor,
-        pool_maxsize=2,
-    )
+    consumer = _consumer(resource, handler)
 
     await consumer.consume()
-    await queue.put(Serializer.pack((1, 2), {"c": 3}))
+    await resource.queue.put(Serializer.pack((1, 2), {"c": 3}))
     await _wait_until(lambda: len(received) == 1)
 
     await consumer.stop()
@@ -52,48 +62,32 @@ async def test_consumer_runs_coro_with_unpacked_args():
 @run_async
 async def test_consumer_disabled_does_not_start_consume_loop():
 
-    queue: asyncio.Queue = asyncio.Queue()
+    resource = _resource(1)
 
     async def handler():
         raise AssertionError("should not run")
 
-    consumer = Consumer(
-        queue=queue,
-        consume_timeout=0.05,
-        serializer=Serializer,
-        coro=handler,
-        enable_consumer=False,
-        pool_executor_cls=PoolExecutor,
-        pool_maxsize=1,
-    )
+    consumer = _consumer(resource, handler, enabled=False, pool_maxsize=1)
 
     await consumer.consume()
-    assert consumer._task is None
+    assert consumer._startup._task is None
     assert consumer._pool_executor is None
 
 
 @run_async
 async def test_consumer_drains_queue_after_stop():
 
-    queue: asyncio.Queue = asyncio.Queue()
+    resource = _resource(2)
     received: list[int] = []
 
     async def handler(x):
         received.append(x)
 
-    consumer = Consumer(
-        queue=queue,
-        consume_timeout=0.05,
-        serializer=Serializer,
-        coro=handler,
-        enable_consumer=True,
-        pool_executor_cls=PoolExecutor,
-        pool_maxsize=2,
-    )
+    consumer = _consumer(resource, handler)
 
     await consumer.consume()
-    await queue.put(Serializer.pack((1,), {}))
-    await queue.put(Serializer.pack((2,), {}))
+    await resource.queue.put(Serializer.pack((1,), {}))
+    await resource.queue.put(Serializer.pack((2,), {}))
     await _wait_until(lambda: len(received) == 2)
 
     await consumer.stop()

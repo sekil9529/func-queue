@@ -11,3 +11,4 @@ __all__ = (
 class Backend(StrEnum):
 
     QUEUE = "queue"
+    RABBIT_AIO_PIKA = "rabbit_aio_pika"

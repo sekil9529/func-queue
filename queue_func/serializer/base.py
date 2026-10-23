@@ -22,6 +22,6 @@ class BaseSerializer(t.Generic[Message], metaclass=abc.ABCMeta):
 
     @staticmethod
     @abc.abstractmethod
-    def unpack(data: Message) -> CoroParams:
+    def unpack(msg: Message) -> CoroParams:
 
         pass

@@ -2,6 +2,7 @@
 
 import typing as t
 
+from queue_func.config.rabbit_aio_pika import DeliveryMode, ExchangeName
 from queue_func.factory import builders as _builders  # noqa: F401 — register backends
 from queue_func.factory.backend import Backend
 from queue_func.factory.registry import build_broker
@@ -79,6 +80,35 @@ def queue(
         serializer_cls: type["BaseSerializer"] = ...,
         publish_timeout: float | None = ...,
         maxsize: int = ...,
+) -> t.Callable[[t.Callable[_P, t.Coroutine[t.Any, t.Any, _R]]], QueueFunc[_P, _R]]:
+
+    ...
+
+
+@t.overload
+def queue(
+        backend: t.Literal[Backend.RABBIT_AIO_PIKA],
+        *,
+        url: str,
+        queue_name: str,
+        enable_declare_queue: bool = ...,
+        queue_durable: bool = ...,
+        queue_exclusive: bool = ...,
+        queue_passive: bool = ...,
+        queue_auto_delete: bool = ...,
+        queue_arguments: dict[str, t.Any] | None = ...,
+        serializer_cls: type["BaseSerializer"] = ...,
+        enable_consumer: bool = ...,
+        consume_timeout: float = ...,
+        consumer_pool_executor_cls: type["BasePoolExecutor"] = ...,
+        consumer_pool_maxsize: int = ...,
+        prefetch_count: int = ...,
+        prefetch_size: int = ...,
+        global_qos: bool = ...,
+        exchange_name: ExchangeName | str = ...,
+        routing_key: str = ...,
+        delivery_mode: DeliveryMode = ...,
+        publish_timeout: float | None = ...,
 ) -> t.Callable[[t.Callable[_P, t.Coroutine[t.Any, t.Any, _R]]], QueueFunc[_P, _R]]:
 
     ...

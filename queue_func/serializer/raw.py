@@ -19,6 +19,6 @@ class Serializer(BaseSerializer[CoroParams]):
         return coro_args, coro_kwargs
 
     @staticmethod
-    def unpack(data: CoroParams) -> CoroParams:
+    def unpack(msg: CoroParams) -> CoroParams:
 
-        return data
+        return msg

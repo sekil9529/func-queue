@@ -21,7 +21,7 @@ class Serializer(BaseSerializer[bytes]):
         return orjson.dumps((coro_args, coro_kwargs))
 
     @staticmethod
-    def unpack(data: bytes) -> CoroParams:
+    def unpack(msg: bytes) -> CoroParams:
 
-        args, kwargs = orjson.loads(data)
+        args, kwargs = orjson.loads(msg)
         return tuple(args), kwargs

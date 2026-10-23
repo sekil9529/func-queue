@@ -12,6 +12,6 @@ from queue_func.serializer.raw import Serializer
 @pyd_dataclass(frozen=True, config=ExtraIgnoreConfig)
 class Config(_Config):
 
-    # broker
+    ## shared resource
     maxsize: int = 200
     serializer_cls: type[BaseSerializer] = Serializer

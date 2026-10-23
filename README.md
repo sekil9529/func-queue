@@ -1,5 +1,12 @@
 # queue-func
 
+[![Coverage Status](https://coveralls.io/repos/github/sekil9529/queue-func/badge.svg?branch=master)](https://coveralls.io/github/sekil9529/queue-func)
+[![tests](https://github.com/sekil9529/queue-func/actions/workflows/tests.yml/badge.svg)](https://github.com/sekil9529/queue-func/actions?query=workflow%3Atests)
+[![Latest Version](https://img.shields.io/pypi/v/queue-func.svg)](https://pypi.org/project/queue-func/)
+[![Wheel](https://img.shields.io/pypi/wheel/queue-func.svg)](https://pypi.org/project/queue-func/)
+[![Python Versions](https://img.shields.io/pypi/pyversions/queue-func.svg)](https://pypi.org/project/queue-func/)
+[![License](https://img.shields.io/pypi/l/queue-func.svg)](https://pypi.org/project/queue-func/)
+
 把 **`async def` 协程** 变成可 **`push`** 的队列任务：在 asyncio 里投递、消费，并按通道控制并发与背压。
 
 仓库：[github.com/sekil9529/queue-func](https://github.com/sekil9529/queue-func)。版本记录见 [Changelog.rst](Changelog.rst)。

@@ -15,6 +15,24 @@
 （暂无）
 
 
+.. _version-0.2.2:
+
+0.2.2
+=====
+
+:release-date: 2026-10-23
+
+文档
+~~~~
+
+- README 增加 PyPI、测试与覆盖率徽章。
+
+其它
+~~~~
+
+- 新增 GitHub Actions 测试，并把覆盖率上传到 Coveralls。
+
+
 .. _version-0.2.1:
 
 0.2.1

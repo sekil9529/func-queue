@@ -1,0 +1,32 @@
+---
+description: 版本号与 Changelog 必须随版本改动一起更新
+alwaysApply: true
+---
+
+# 版本号与变更记录
+
+在 `dev/x.y.z` 上做该版本的改动时，同一批改动里必须带上版本号和变更说明。不要等用户提醒。
+
+## 必须改的文件
+
+1. `pyproject.toml` 的 `version` 改为该版本，例如 `0.2.3`
+2. `CHANGELOG.md` 在文件最上方新增该版本
+
+## Changelog 写法
+
+- 版本号单独一行，下面用同等长度的 `-`
+- 每条以 `* ` 开头，前缀与提交类型一致：`feat:`、`fix:`、`refactor:`、`docs:`、`test:`、`ci:`、`chore:`
+- 前缀后是简短陈述，不以分号结尾
+- 不写分类小节，不写日期，不写「暂无」
+- 对外用法没变时写明，例如 `@queue` 的用法不变
+
+```markdown
+0.2.3
+-----
+
+* refactor: 后端实现收到 `backends/`，共用基类收到 `core`
+```
+
+## 发版前
+
+打 tag、`poetry build`、上传 PyPI 之前，先核对 `pyproject.toml` 与 `CHANGELOG.md` 都已经是这个版本，且 changelog 写了本版内容。

@@ -2,10 +2,10 @@
 
 import asyncio
 
-from queue_func.consumer.queue import Consumer
+from queue_func.backends.queue.consumer import Consumer
 from queue_func.pool_executor.general import PoolExecutor
 from queue_func.serializer.raw import Serializer
-from queue_func.shared_resource.queue import Resource
+from queue_func.backends.queue.resource import Resource
 
 from tests.helpers import run_async
 

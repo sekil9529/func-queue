@@ -1,7 +1,7 @@
 # coding: utf-8
 
 from queue_func.serializer.orjson_ser import Serializer
-from queue_func.shared_resource.rabbit_aio_pika import Resource
+from queue_func.backends.rabbit_aio_pika.resource import Resource
 
 from tests.helpers import run_async
 from tests.rabbit_aio_pika_fakes import FakeWorld, patch_connect

@@ -4,12 +4,12 @@ import abc
 import typing as t
 
 from queue_func.serializer.base import Message
-from queue_func.shared_resource.base import Resource
+from queue_func.core.resource import Resource
 
 if t.TYPE_CHECKING:
-    from queue_func.config.general import Config
-    from queue_func.producer.base import BaseProducer
-    from queue_func.consumer.base import BaseConsumer
+    from queue_func.core.config import Config
+    from queue_func.core.producer import BaseProducer
+    from queue_func.core.consumer import BaseConsumer
 
 
 ConfigType = t.TypeVar("ConfigType", bound="Config")

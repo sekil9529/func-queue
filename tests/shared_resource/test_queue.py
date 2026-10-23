@@ -5,7 +5,7 @@ import asyncio
 import pytest
 
 from queue_func.serializer.raw import Serializer
-from queue_func.shared_resource.queue import Resource
+from queue_func.backends.queue.resource import Resource
 
 from tests.helpers import run_async
 

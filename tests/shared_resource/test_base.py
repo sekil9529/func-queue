@@ -1,6 +1,6 @@
 from queue_func.serializer.orjson_ser import Serializer as OrjsonSerializer
 from queue_func.serializer.raw import Serializer
-from queue_func.shared_resource.base import BaseResource
+from queue_func.core.resource import BaseResource
 
 
 def test_base_resource_stores_serializer():

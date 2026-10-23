@@ -6,7 +6,7 @@ from queue_func.factory.backend import Backend
 from queue_func.factory.registry import register_backend
 
 if t.TYPE_CHECKING:
-    from queue_func.broker.base import BaseBroker
+    from queue_func.core.broker import BaseBroker
 
 
 @register_backend(Backend.RABBIT_AIO_PIKA)
@@ -15,8 +15,8 @@ def build_rabbit_aio_pika_broker(
         **kwargs: t.Any) -> "BaseBroker[t.Any, t.Any]":
 
     try:
-        from queue_func.broker.rabbit_aio_pika import Broker
-        from queue_func.config.rabbit_aio_pika import Config
+        from queue_func.backends.rabbit_aio_pika.broker import Broker
+        from queue_func.backends.rabbit_aio_pika.config import Config
     except ImportError as exc:
         raise ImportError(
             "Backend.RABBIT_AIO_PIKA requires aio-pika. "

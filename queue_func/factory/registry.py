@@ -5,7 +5,7 @@ import typing as t
 from queue_func.factory.backend import Backend
 
 if t.TYPE_CHECKING:
-    from queue_func.broker.base import BaseBroker
+    from queue_func.core.broker import BaseBroker
 
 __all__ = (
     "register_backend",

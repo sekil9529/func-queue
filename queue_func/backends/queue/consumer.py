@@ -11,23 +11,30 @@ from queue_func.core.consumer import BaseConsumer as _BaseConsumer
 
 class Consumer(_BaseConsumer[Message, Resource]):
 
-    async def _consume(self) -> None:
 
-        while (not self._stopped) or (not self._resource.queue.empty()):
-            self._mark_running()
-            try:
-                message: Message = await asyncio.wait_for(
-                    self._resource.queue.get(),
-                    timeout=self._consume_timeout,
-                )
-            except asyncio.TimeoutError:
-                continue
-            coro_args, coro_kwargs = self._resource.serializer.unpack(message)
-            await self._dispatch(coro_args, coro_kwargs)
-            self._resource.queue.task_done()
+    async def _on_startup(self) -> None:
 
-    def _register_shutdown(self) -> None:
+        self._on_cleanup.register(self._resource.queue.join)
 
-        self._shutdown.register(self._startup.wait)
-        self._shutdown.register(self._resource.queue.join)
-        self._shutdown.register(self._join_pool_executor)
+    async def _consume_once(self) ->  None:
+
+        queue = self._resource.queue
+        try:
+            message: Message = await asyncio.wait_for(
+                queue.get(),
+                timeout=self._consume_timeout,
+            )
+        except asyncio.TimeoutError:
+            return None
+        else:
+            await self._dispatch(message)
+            queue.task_done()
+            return message
+
+    async def _drain(self) -> None:
+
+        queue = self._resource.queue
+        while not queue.empty():
+            message: Message = queue.get_nowait()
+            await self._dispatch(message)
+            queue.task_done()
